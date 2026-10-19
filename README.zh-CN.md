@@ -23,10 +23,10 @@
 在 Paseo 的插件市场里安装本插件,或直接运行:
 
 ```
-paseo plugin add git:Arkmusn/paseo-market
+paseo plugin add git:Arkmusn/paseo-plugin-management
 ```
 
-需要 Paseo 0.11.0-beta.4 或更高版本,且 daemon 的 PATH 上有 `paseo` 命令。安装后的插件 id 是 `paseo-plugin-management`(仓库名仍是 `paseo-market`)。
+需要 Paseo 0.11.0-beta.4 或更高版本,且 daemon 的 PATH 上有 `paseo` 命令。安装后的插件 id 是 `paseo-plugin-management`。
 
 ## 添加市场源:支持的地址形式
 

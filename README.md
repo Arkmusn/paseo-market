@@ -23,10 +23,10 @@ A screen inside Paseo for managing plugins: it aggregates several plugin directo
 Install it from the plugin market inside Paseo, or run:
 
 ```
-paseo plugin add git:Arkmusn/paseo-market
+paseo plugin add git:Arkmusn/paseo-plugin-management
 ```
 
-Requires Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's path. The installed plugin id is `paseo-plugin-management` (the repository keeps the `paseo-market` name).
+Requires Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's path. The installed plugin id is `paseo-plugin-management`.
 
 ## Adding a market source: accepted URL forms
 
