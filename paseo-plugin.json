@@ -2,7 +2,10 @@
   "id": "paseo-plugin-management",
   "name": "paseo-plugin-management",
   "description": "Browse, install and manage plugins from several Paseo directories in one screen.",
-  "media": [],
+  "media": [
+    "assets/market.png",
+    "assets/installed.png"
+  ],
   "requirements": {
     "paseo": ">=0.11.0"
   },
