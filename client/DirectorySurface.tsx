@@ -31,6 +31,7 @@ import {
   SUBMIT_URL,
   setAutomaticUpdatePreference,
 } from "../shared/directory"
+import { DirectorySettings } from "./DirectorySettings"
 import { filterAccessibilityLabel } from "./accessibility"
 import {
   categoryOptions as buildCategoryOptions,
@@ -264,6 +265,7 @@ export function DirectorySurface({
   theme,
   layout,
   onShowInstalled,
+  ...surfaceProps
 }: PluginSurfaceProps & {
   /** Switches the shared screen to the installed list. */
   onShowInstalled?: () => void
@@ -276,6 +278,7 @@ export function DirectorySurface({
   const settings = useSettings(directorySettings)
   const toast = useToast()
   const queryClient = useQueryClient()
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [search, setSearch] = useState(DEFAULT_DIRECTORY_BROWSE_SETTINGS.query)
   const [categoryFilter, setCategoryFilter] = useState<ReadonlySet<string>>(
     new Set()
@@ -1117,6 +1120,14 @@ export function DirectorySurface({
         <View style={styles.headerActions}>
           <Pressable
             accessibilityRole="link"
+            accessibilityLabel={t().market.settingsButton}
+            style={styles.textAction}
+            onPress={() => setSettingsOpen(true)}
+          >
+            <Text style={styles.textActionText}>{t().market.settingsButton}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
             accessibilityLabel={t().installed.title}
             style={styles.textAction}
             onPress={() => onShowInstalled?.()}
@@ -1410,6 +1421,18 @@ export function DirectorySurface({
     )
   }
 
+  const settingsDialog = (
+    <Modal
+      title={t().settings.section}
+      open={settingsOpen}
+      onOpenChange={setSettingsOpen}
+    >
+      <Modal.Content>
+        <DirectorySettings {...surfaceProps} embedded theme={theme} layout={layout} />
+      </Modal.Content>
+    </Modal>
+  )
+
   const filtersSheet = (
     <Modal title={t().market.filters} open={filtersOpen} onOpenChange={setFiltersOpen}>
       <Modal.Content>
@@ -1497,6 +1520,7 @@ export function DirectorySurface({
         />
       )}
       {filtersSheet}
+      {settingsDialog}
     </View>
   )
 }

@@ -174,7 +174,11 @@ function LanguageChips({
 export function DirectorySettings({
   theme,
   layout: _layout,
-}: PluginSurfaceProps) {
+  embedded = false,
+}: PluginSurfaceProps & {
+  /** 在弹窗里复用时不再套一层设置分区。 */
+  embedded?: boolean
+}) {
   useMarketLocale()
   const settings = useSettings(directorySettings)
   const runAutomaticUpdates = useRpc(directoryRunAutomaticUpdatesRpc)
@@ -196,8 +200,8 @@ export function DirectorySettings({
   if (settings.status === "loading") return null
 
   if (settings.status === "error" || settings.status === "invalid") {
-    return (
-      <SettingsSection title={t().settings.section}>
+    const failure = (
+      <SettingsCard>
         <SettingsRow label={t().settings.sources} error={settings.error} />
         <SettingsAction
           label={t().settings.tryAgain}
@@ -211,7 +215,12 @@ export function DirectorySettings({
             onPress={() => void settings.reset()}
           />
         ) : null}
-      </SettingsSection>
+      </SettingsCard>
+    )
+    return embedded ? (
+      failure
+    ) : (
+      <SettingsSection title={t().settings.section}>{failure}</SettingsSection>
     )
   }
 
@@ -287,8 +296,8 @@ export function DirectorySettings({
     }
   }
 
-  return (
-    <SettingsSection title={t().settings.section} info={sourcesInfo()}>
+  const content = (
+    <>
       <SettingsCard>
         <SettingsRow
           label={t().settings.language}
@@ -402,6 +411,14 @@ export function DirectorySettings({
           onPress={() => void runUpdatesNow()}
         />
       </SettingsCard>
+    </>
+  )
+
+  return embedded ? (
+    content
+  ) : (
+    <SettingsSection title={t().settings.section} info={sourcesInfo()}>
+      {content}
     </SettingsSection>
   )
 }

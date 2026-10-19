@@ -15,6 +15,7 @@
 - **多市场源**:内置 Paseo 官方注册表与 paseo.cafe 目录,可添加任意数量的自定义 JSON 源(自动识别注册表协议、Cafe 形态或裸数组);每个条目标注来源,同名插件互不混淆
 - **添加源很简单**:直接粘贴 GitHub 仓库页面地址即可,自动解析成 raw 文件地址,不必手工拼 `raw.githubusercontent.com` 链接
 - **已装插件管理**:启用(绿)/禁用(红)、重载、更新、卸载,一行一个操作按钮
+- **首页直达配置**:市场标题栏的「设置」按钮打开本插件的配置弹窗(市场源、语言、自动更新),不必离开页面
 - **受审阅的安装锚点**:安装前展示将要执行的命令与固定 commit;目录上的锚点若在确认后变动,安装会被拒绝
 - **自动更新**:默认开启,daemon 启动 30 秒后检查,之后每 6 小时一次;可按插件关闭,也可在设置里立即执行
 - **侧边栏徽标**:有可用更新时,Plugins 侧边栏项显示更新数量
@@ -74,6 +75,7 @@ A screen inside Paseo for managing plugins: it aggregates several plugin directo
 - **Multiple market sources**: the official Paseo registry and the paseo.cafe directory are built in; add any number of custom JSON sources (registry protocol, Cafe shape, or a bare array are auto-detected). Every listing is tagged with its source.
 - **Easy source URLs**: paste a plain GitHub repository URL and it is resolved to the raw file URL automatically — no hand-built `raw.githubusercontent.com` links.
 - **Installed plugin management**: enable (green) / disable (red), reload, update and uninstall, one row of actions per plugin.
+- **Settings in place**: a Settings button in the market header opens this plugin's own configuration (sources, language, automatic updates) without leaving the page.
 - **Reviewed install anchors**: the exact command and pinned commit are shown before installing; if the catalog's anchor moves after you confirm, the install is refused.
 - **Automatic updates**: on by default; checked 30 seconds after the daemon starts and every 6 hours after that. Opt out per plugin, or run a check immediately from settings.
 - **Sidebar badge**: the Plugins sidebar item shows the number of pending updates.
