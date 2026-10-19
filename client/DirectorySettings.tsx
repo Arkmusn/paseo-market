@@ -25,7 +25,13 @@ import {
 import { summarizeAutomaticUpdates } from "./update-status"
 
 const SOURCES_INFO =
-  "A market source is a browsable plugin directory. Paseo registry reads <url>/index.json; Paseo Cafe reads <url>/api/plugins; Custom JSON auto-detects either shape or a bare array. The URL must use HTTPS, or HTTP on localhost."
+  "A market source is a browsable plugin directory. Paseo registry reads <url>/index.json; Paseo Cafe reads <url>/api/plugins; Custom JSON auto-detects either shape or a bare array. The URL must use HTTPS, or HTTP on localhost. A GitHub repository page is resolved to its raw files automatically."
+
+/** 该源实际会被读取的地址，用来在输入框下实时展示解析结果。 */
+function readTarget(base: string, kind: SourceKind): string {
+  if (kind === "paseo-cafe") return `${base}/api/plugins`
+  return `${base}/index.json`
+}
 
 const KIND_HINTS: Record<SourceKind, string> = {
   "paseo-registry":
@@ -104,6 +110,9 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
   const [draftKind, setDraftKind] = useState<SourceKind>("paseo-registry")
   const [draftName, setDraftName] = useState("")
   const [draftUrl, setDraftUrl] = useState("")
+  const resolvedBase = draftUrl.trim()
+    ? registryBase(draftUrl.trim())
+    : ""
   const [busy, setBusy] = useState(false)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
 
@@ -261,9 +270,13 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
           />
           <SettingsInput
             label="Source URL"
-            hint="HTTPS, or HTTP on localhost. No trailing path, except Custom JSON."
+            hint={
+              resolvedBase
+                ? `Will read ${readTarget(resolvedBase, draftKind)}`
+                : "HTTPS, or HTTP on localhost. A GitHub repository URL is resolved to its raw files automatically."
+            }
             initialValue=""
-            placeholder="https://example.com"
+            placeholder="https://github.com/owner/plugins"
             onChangeText={setDraftUrl}
             disabled={disabled}
             error={saveError}

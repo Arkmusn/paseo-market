@@ -56,8 +56,69 @@ const registryUrlSchema = z
     "Registry URL must use HTTPS, or HTTP on localhost"
   )
 
+/**
+ * 把常见的 GitHub 页面地址解析成可直接抓取的 raw 地址，用户就不必自己拼
+ * raw.githubusercontent.com 链接。`HEAD` 由 raw 服务解析为默认分支，因此
+ * 不需要知道分支名。认识的形态之外的输入原样返回。
+ */
+export function canonicalSourceUrl(input: string): string {
+  const raw = input.trim()
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return raw
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return raw
+  const host = url.hostname.toLowerCase().replace(/^www\./, "")
+  const segments = url.pathname
+    .split("/")
+    .filter((part) => part.length > 0)
+
+  // 仓库页 https://github.com/<owner>/<repo>，可选 /tree|/blob|/raw/<ref>/<路径>
+  if (host === "github.com") {
+    const [owner, repoWithSuffix, kind, ref, ...rest] = segments
+    if (!owner || !repoWithSuffix) return raw
+    const repo = repoWithSuffix.replace(/\.git$/i, "")
+    if (!isSafePathSegment(owner) || !isSafePathSegment(repo)) return raw
+    if (!kind) return `https://raw.githubusercontent.com/${owner}/${repo}/HEAD`
+    if ((kind === "tree" || kind === "blob" || kind === "raw") && ref) {
+      if (!isSafePathSegment(ref)) return raw
+      const tail = rest.filter(isSafePathSegment)
+      // blob/raw 只有指到 index.json 才能确定目录落点；其它文件不作猜测
+      if (kind !== "tree") {
+        if (tail.pop() !== "index.json") return raw
+      }
+      const base = tail.length > 0 ? `/${tail.join("/")}` : ""
+      return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}${base}`
+    }
+    return raw
+  }
+
+  // raw 地址本身：规范掉 refs/heads|tags 前缀、结尾的 index.json，缺 ref 时补 HEAD
+  if (host === "raw.githubusercontent.com") {
+    let parts = [...segments]
+    if (parts.length >= 4 && parts[2] === "refs") {
+      if (parts[3] !== "heads" && parts[3] !== "tags") return raw
+      parts.splice(2, 2)
+    }
+    if (parts.length > 2 && parts[parts.length - 1] === "index.json") parts.pop()
+    if (parts.length === 2) parts.push("HEAD")
+    if (parts.length < 3 || parts.some((part) => !isSafePathSegment(part))) {
+      return raw
+    }
+    return `https://raw.githubusercontent.com/${parts.join("/")}`
+  }
+
+  return raw
+}
+
+function isSafePathSegment(value: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value) && !value.includes("..")
+}
+
 export function registryBase(url: string): string {
-  return url.trim().replace(/\/+$/, "")
+  return canonicalSourceUrl(url).replace(/\/+$/, "")
 }
 
 /** 去掉路径后的 `host[:port]`；仅在 HTTPS 且无路径时用于 `host/owner/slug` 安装来源。 */

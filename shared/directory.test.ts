@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { Artifact, InstalledPlugin } from "./directory"
 import {
+  canonicalSourceUrl,
   countAvailableUpdates,
   DEFAULT_REGISTRY_URL,
   DEFAULT_SOURCES,
@@ -17,6 +18,7 @@ import {
   getUpdateCommand,
   isDefaultDirectoryBrowseView,
   isTrustedRegistryUrl,
+  registryBase,
   migrateDirectorySettings,
   sameArtifact,
   setAutomaticUpdatePreference,
@@ -307,6 +309,76 @@ describe("installation state", () => {
         { outcome: "update" },
       ])
     ).toBe(2)
+  })
+})
+
+describe("canonicalSourceUrl", () => {
+  it("resolves a GitHub repository page to its raw default branch", () => {
+    expect(canonicalSourceUrl("https://github.com/Arkmusn/paseo-plugins")).toBe(
+      "https://raw.githubusercontent.com/Arkmusn/paseo-plugins/HEAD"
+    )
+    expect(
+      canonicalSourceUrl("https://github.com/Arkmusn/paseo-plugins.git")
+    ).toBe("https://raw.githubusercontent.com/Arkmusn/paseo-plugins/HEAD")
+  })
+
+  it("resolves tree, blob, and raw pages that point at an index", () => {
+    expect(
+      canonicalSourceUrl("https://github.com/o/r/tree/main")
+    ).toBe("https://raw.githubusercontent.com/o/r/main")
+    expect(
+      canonicalSourceUrl("https://github.com/o/r/tree/main/market")
+    ).toBe("https://raw.githubusercontent.com/o/r/main/market")
+    expect(
+      canonicalSourceUrl("https://github.com/o/r/blob/main/index.json")
+    ).toBe("https://raw.githubusercontent.com/o/r/main")
+    expect(
+      canonicalSourceUrl("https://github.com/o/r/raw/main/dir/index.json")
+    ).toBe("https://raw.githubusercontent.com/o/r/main/dir")
+  })
+
+  it("leaves blob pages it cannot place alone", () => {
+    expect(
+      canonicalSourceUrl("https://github.com/o/r/blob/main/other.json")
+    ).toBe("https://github.com/o/r/blob/main/other.json")
+    expect(canonicalSourceUrl("https://github.com/o/r/releases")).toBe(
+      "https://github.com/o/r/releases"
+    )
+    expect(canonicalSourceUrl("https://github.com/o")).toBe(
+      "https://github.com/o"
+    )
+  })
+
+  it("canonicalizes raw URLs: refs prefixes, index.json suffix, missing ref", () => {
+    expect(
+      canonicalSourceUrl(
+        "https://raw.githubusercontent.com/o/r/refs/heads/main"
+      )
+    ).toBe("https://raw.githubusercontent.com/o/r/main")
+    expect(
+      canonicalSourceUrl("https://raw.githubusercontent.com/o/r/refs/tags/v1/dir")
+    ).toBe("https://raw.githubusercontent.com/o/r/v1/dir")
+    expect(
+      canonicalSourceUrl("https://raw.githubusercontent.com/o/r/main/index.json")
+    ).toBe("https://raw.githubusercontent.com/o/r/main")
+    expect(canonicalSourceUrl("https://raw.githubusercontent.com/o/r")).toBe(
+      "https://raw.githubusercontent.com/o/r/HEAD"
+    )
+  })
+
+  it("passes other hosts through unchanged, trailing slash included", () => {
+    expect(canonicalSourceUrl("https://plugins.paseo.sh/")).toBe(
+      "https://plugins.paseo.sh/"
+    )
+    expect(canonicalSourceUrl("https://market.example.com/dir")).toBe(
+      "https://market.example.com/dir"
+    )
+  })
+
+  it("keeps registryBase resolving through the aliases", () => {
+    expect(registryBase("https://github.com/Arkmusn/paseo-plugins")).toBe(
+      "https://raw.githubusercontent.com/Arkmusn/paseo-plugins/HEAD"
+    )
   })
 })
 
