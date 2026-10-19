@@ -865,7 +865,9 @@ export function DirectorySurface({
       },
       headerActions: {
         flexDirection: "row" as const,
+        flexWrap: "wrap" as const,
         alignItems: "center" as const,
+        justifyContent: "flex-end" as const,
         gap: space.sm,
       },
       segments: { flexDirection: "row" as const, gap: space.sm },
@@ -914,16 +916,6 @@ export function DirectorySurface({
         color: theme.colors.accentForeground,
         fontSize: 11,
         fontWeight: "600" as const,
-      },
-      textAction: {
-        justifyContent: "center" as const,
-        minHeight: touch ?? 32,
-        paddingHorizontal: space.xs,
-      },
-      textActionText: {
-        color: theme.colors.foreground,
-        fontSize: 13,
-        textDecorationLine: "underline" as const,
       },
       caption: { color: muted, fontSize: 12 },
       chipWrap: {
@@ -1121,28 +1113,28 @@ export function DirectorySurface({
           <Pressable
             accessibilityRole="link"
             accessibilityLabel={t().market.settingsButton}
-            style={styles.textAction}
+            style={styles.button}
             onPress={() => setSettingsOpen(true)}
           >
-            <Text style={styles.textActionText}>{t().market.settingsButton}</Text>
+            <Text style={styles.buttonText}>{t().market.settingsButton}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="link"
             accessibilityLabel={t().installed.title}
-            style={styles.textAction}
+            style={styles.button}
             onPress={() => onShowInstalled?.()}
           >
-            <Text style={styles.textActionText}>
+            <Text style={styles.buttonText}>
               {t().market.installedButton(installations.length)}
             </Text>
           </Pressable>
           <Pressable
             accessibilityRole="link"
             accessibilityLabel={t().market.submitPlugin}
-            style={styles.textAction}
+            style={styles.button}
             onPress={() => openLink(SUBMIT_URL)}
           >
-            <Text style={styles.textActionText}>{t().market.submitPlugin}</Text>
+            <Text style={styles.buttonText}>{t().market.submitPlugin}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
