@@ -19,6 +19,10 @@ The daemon downloads each enabled source and caches it for five minutes. A listi
 
 Installing, updating, enabling, disabling, reloading and uninstalling run the `paseo` command line on the daemon host. Before an install, the app shows the pinned npm version or Git commit and the repository it comes from, and you confirm. The daemon then installs exactly that reviewed artifact. If the directory moves the pin after you opened the review, the install is refused.
 
+## Language
+
+The interface ships in English and Chinese. Plugin market settings have a Language choice: Automatic follows the system language and falls back to English, or you can pin either language. Listing bodies such as READMEs and caveats are not translated; they appear in the language each plugin provides.
+
 ## Setup
 
 Plugin market needs Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's path.

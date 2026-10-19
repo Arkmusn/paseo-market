@@ -52,6 +52,7 @@ import { RowSkeleton, ThemeGridSkeleton } from "./Skeleton"
 import { StateMessage } from "./StateMessage"
 import { dateBadgeForSortMode, type SortMode, sortEntries } from "./sort"
 import { ThemeCard } from "./ThemeCard"
+import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
 import { MIN_TOUCH, mutedTextColor, radius, space } from "./visual"
 import { openExternal } from "./web"
@@ -70,15 +71,16 @@ const NO_INSTALLATIONS: readonly InstalledPlugin[] = []
 
 type Segment = "plugins" | "themes"
 
-const SEGMENT_INFO: Record<Segment, { label: string; noun: string }> = {
-  plugins: { label: "Plugins", noun: "plugin" },
-  themes: { label: "Themes", noun: "theme" },
-}
 const SEGMENT_ORDER: readonly Segment[] = ["plugins", "themes"]
 
+function segmentLabel(segment: Segment): string {
+  return segment === "plugins" ? t().market.plugins : t().market.themes
+}
+
 function countNoun(count: number, segment: Segment): string {
-  const { noun } = SEGMENT_INFO[segment]
-  return `${count} ${noun}${count === 1 ? "" : "s"}`
+  return segment === "plugins"
+    ? t().market.pluginCount(count)
+    : t().market.themeCount(count)
 }
 
 export function canQueueAutomaticUpdatePreference(status: string): boolean {
@@ -231,28 +233,32 @@ function OptionGroup<T extends string>({
   )
 }
 
-const STATUS_OPTIONS: readonly {
+function statusOptions(): readonly {
   value: InstallationStatusFilter
   label: string
-}[] = [
-  { value: "all", label: "All" },
-  { value: "installed", label: "Installed" },
-  { value: "updates", label: "Updates" },
-  { value: "not-installed", label: "Not installed" },
-]
+}[] {
+  return [
+    { value: "all", label: t().market.statusAll },
+    { value: "installed", label: t().market.statusInstalled },
+    { value: "updates", label: t().market.statusUpdates },
+    { value: "not-installed", label: t().market.statusNotInstalled },
+  ]
+}
 
 interface UpdateVariables {
   entry: DirectoryEntry
   installation: InstalledPlugin
 }
 
-const SORT_OPTIONS: readonly { value: SortMode; label: string }[] = [
-  { value: "updates-first", label: "Updates first" },
-  { value: "popular", label: "Popular" },
-  { value: "recent", label: "Recently updated" },
-  { value: "recently-added", label: "Recently added" },
-  { value: "a-z", label: "A to Z" },
-]
+function sortOptions(): readonly { value: SortMode; label: string }[] {
+  return [
+    { value: "updates-first", label: t().market.sortUpdatesFirst },
+    { value: "popular", label: t().market.sortPopular },
+    { value: "recent", label: t().market.sortRecent },
+    { value: "recently-added", label: t().market.sortRecentlyAdded },
+    { value: "a-z", label: t().market.sortAZ },
+  ]
+}
 
 export function DirectorySurface({
   theme,
@@ -262,6 +268,7 @@ export function DirectorySurface({
   /** Switches the shared screen to the installed list. */
   onShowInstalled?: () => void
 }) {
+  useMarketLocale()
   const listDirectory = useRpc(directoryListRpc)
   const installPlugin = useRpc(directoryInstallRpc)
   const updatePlugin = useRpc(directoryUpdateRpc)
@@ -409,7 +416,7 @@ export function DirectorySurface({
         })
       } else {
         setPendingAutomaticPreference(null)
-        toast.error("Failed to save automatic update preference.")
+        toast.error(t().market.saveAutoUpdateFailed)
       }
     })
   }, [
@@ -427,7 +434,7 @@ export function DirectorySurface({
     enabled: boolean
   ) => {
     if (!canQueueAutomaticUpdatePreference(settings.status)) {
-      toast.error("Failed to save automatic update preference.")
+      toast.error(t().market.saveAutoUpdateFailed)
       return
     }
     setPendingAutomaticPreference({ installationId, enabled, attempts: 0 })
@@ -506,7 +513,7 @@ export function DirectorySurface({
     onError: (error, entry) => {
       setInstallFailure({
         entryId: entryKey(entry),
-        message: errorMessage(error, "Install failed"),
+        message: errorMessage(error, t().market.installFailed),
       })
       toast.error(`Couldn't install ${entry.name}. See details below.`)
     },
@@ -572,7 +579,7 @@ export function DirectorySurface({
       toast.show("Plugin directory refreshed.", { variant: "success" })
     },
     onError: (error: unknown) => {
-      toast.error(errorMessage(error, "Refresh failed"))
+      toast.error(errorMessage(error, t().market.refreshFailedShort))
     },
   })
 
@@ -793,7 +800,7 @@ export function DirectorySurface({
     openExternal(url).catch(() => toast.error("Couldn't open the link."))
   }
 
-  const statusOptions = STATUS_OPTIONS.map(
+  const statusChoices = statusOptions().map(
     ({ value, label }): ChoiceOption<InstallationStatusFilter> => {
       const available = statusAvailable[value]
       return {
@@ -807,7 +814,7 @@ export function DirectorySurface({
       }
     }
   )
-  const sortOptions = SORT_OPTIONS.map(
+  const sortChoices = sortOptions().map(
     ({ value, label }): ChoiceOption<SortMode> => ({
       value,
       label,
@@ -1105,32 +1112,30 @@ export function DirectorySurface({
     <View style={styles.listHeader}>
       <View style={styles.titleRow}>
         <Text role="heading" aria-level={1} style={styles.title}>
-          Plugin directory
+          {t().market.title}
         </Text>
         <View style={styles.headerActions}>
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel="Show installed plugins"
+            accessibilityLabel={t().installed.title}
             style={styles.textAction}
             onPress={() => onShowInstalled?.()}
           >
             <Text style={styles.textActionText}>
-              {installations.length > 0
-                ? `Installed ${installations.length}`
-                : "Installed"}
+              {t().market.installedButton(installations.length)}
             </Text>
           </Pressable>
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel="Submit a plugin"
+            accessibilityLabel={t().market.submitPlugin}
             style={styles.textAction}
             onPress={() => openLink(SUBMIT_URL)}
           >
-            <Text style={styles.textActionText}>Submit a plugin</Text>
+            <Text style={styles.textActionText}>{t().market.submitPlugin}</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Refresh plugin directory"
+            accessibilityLabel={t().market.refresh}
             disabled={settingsPending || refreshing}
             style={[
               styles.button,
@@ -1139,7 +1144,7 @@ export function DirectorySurface({
             onPress={() => refreshMutation.mutate()}
           >
             <Text style={styles.buttonText}>
-              {refreshing ? "Refreshing…" : "Refresh"}
+              {refreshing ? t().market.refreshing : t().market.refresh}
             </Text>
           </Pressable>
         </View>
@@ -1147,7 +1152,7 @@ export function DirectorySurface({
 
       <View
         accessibilityRole="tablist"
-        accessibilityLabel="Browse plugins or themes"
+        accessibilityLabel={t().market.browseTabs}
         style={styles.segments}
       >
         {SEGMENT_ORDER.map((value) => (
@@ -1158,13 +1163,13 @@ export function DirectorySurface({
             grow={layout.compact}
             label={
               directory
-                ? `${SEGMENT_INFO[value].label} ${segmentCount(value)}`
-                : SEGMENT_INFO[value].label
+                ? `${segmentLabel(value)} ${segmentCount(value)}`
+                : segmentLabel(value)
             }
             accessibilityLabel={
               directory
-                ? `${SEGMENT_INFO[value].label}, ${countNoun(segmentCount(value), value)}`
-                : SEGMENT_INFO[value].label
+                ? `${segmentLabel(value)}, ${countNoun(segmentCount(value), value)}`
+                : segmentLabel(value)
             }
             selected={segment === value}
             theme={theme}
@@ -1176,8 +1181,8 @@ export function DirectorySurface({
 
       <View style={styles.searchRow}>
         <TextInput
-          accessibilityLabel={`Search Paseo ${SEGMENT_INFO[segment].label.toLowerCase()}`}
-          placeholder={`Search ${SEGMENT_INFO[segment].label.toLowerCase()}…`}
+          accessibilityLabel={`${t().market.searchPlaceholder}: ${t().common.installed}`}
+          placeholder={t().market.searchPlaceholder}
           value={search}
           onChangeText={(value) => setSearch(value.slice(0, 200))}
           style={styles.searchInput}
@@ -1190,7 +1195,7 @@ export function DirectorySurface({
           style={styles.button}
           onPress={() => setFiltersOpen(true)}
         >
-          <Text style={styles.buttonText}>Filters</Text>
+          <Text style={styles.buttonText}>{t().market.filters}</Text>
           {activeFilterCount > 0 ? (
             <View style={styles.countBadge}>
               <Text style={styles.countBadgeText}>{activeFilterCount}</Text>
@@ -1210,7 +1215,7 @@ export function DirectorySurface({
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipStrip}
-          accessibilityLabel="Filter by market source"
+          accessibilityLabel={t().market.sourceFilter}
         >
           {sourceChipElements}
         </ScrollView>
@@ -1221,20 +1226,20 @@ export function DirectorySurface({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            accessibilityLabel="Plugin categories"
+            accessibilityLabel={t().market.categories}
             contentContainerStyle={styles.chipStrip}
           >
             {categoryChipElements}
           </ScrollView>
         ) : (
-          <View accessibilityLabel="Plugin categories" style={styles.chipWrap}>
+          <View accessibilityLabel={t().market.categories} style={styles.chipWrap}>
             {categoryChipElements}
           </View>
         )
       ) : null}
 
       {settingsPending ? (
-        <Text style={styles.feedbackText}>Loading Plugin market settings…</Text>
+        <Text style={styles.feedbackText}>{t().market.loadingSettings}</Text>
       ) : null}
       {settings.status === "error" || settings.status === "invalid" ? (
         <Text accessibilityRole="alert" style={styles.feedbackText}>
@@ -1250,20 +1255,20 @@ export function DirectorySurface({
             accessibilityRole="alert"
             style={styles.feedbackText}
           >
-            {source.name}: {source.error}
+            {t().market.sourceFailed(source.name, source.error ?? "")}
           </Text>
         ))}
       {updateStatusQuery.isFetching ? (
-        <Text style={styles.feedbackText}>Checking for plugin updates…</Text>
+        <Text style={styles.feedbackText}>{t().market.checkingUpdates}</Text>
       ) : null}
       {updateStatusQuery.isError ? (
         <Text accessibilityRole="alert" style={styles.feedbackText}>
-          Update status is unavailable: {updateStatusQuery.error.message}
+          {t().market.updateStatusUnavailable(updateStatusQuery.error.message)}
         </Text>
       ) : null}
       {directory?.installationError ? (
         <Text accessibilityRole="alert" style={styles.feedbackText}>
-          Couldn't check installed plugins: {directory.installationError}
+          {t().market.installedCheckFailed(directory.installationError)}
         </Text>
       ) : null}
       {invalidNotice ? (
@@ -1272,12 +1277,11 @@ export function DirectorySurface({
       {directoryQuery.isError && directory ? (
         <View accessibilityRole="alert" style={styles.banner}>
           <Text style={styles.bannerText}>
-            Couldn't refresh the plugin directory:{" "}
-            {directoryQuery.error.message}. Showing the last loaded list.
+            {t().market.refreshFailed(directoryQuery.error.message)}
           </Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Retry loading the plugin directory"
+            accessibilityLabel={t().market.refreshFailedShort}
             disabled={directoryQuery.isFetching}
             style={[
               styles.button,
@@ -1285,7 +1289,7 @@ export function DirectorySurface({
             ]}
             onPress={() => void directoryQuery.refetch()}
           >
-            <Text style={styles.buttonText}>Retry</Text>
+            <Text style={styles.buttonText}>{t().common.retry}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -1293,7 +1297,7 @@ export function DirectorySurface({
       {featuredEntries.length > 0 ? (
         <View style={styles.featured}>
           <Text role="heading" aria-level={2} style={styles.sectionTitle}>
-            Featured
+            {t().market.featured}
           </Text>
           {featuredEntries.map((entry) =>
             renderRow(entry, undefined, `featured-${entryKey(entry)}`)
@@ -1310,8 +1314,8 @@ export function DirectorySurface({
     </View>
   )
 
-  const otherLabel = SEGMENT_INFO[otherSegment].label
-  const segmentLabel = SEGMENT_INFO[segment].label
+  const otherLabel = segmentLabel(otherSegment)
+  const currentLabel = segmentLabel(segment)
   const segmentEntryCount = themesActive
     ? themeEntries.length
     : pluginEntries.length
@@ -1321,7 +1325,7 @@ export function DirectorySurface({
     emptyState = (
       <View style={styles.stateStack}>
         <Text accessibilityLiveRegion="polite" style={styles.feedbackText}>
-          Loading {segmentLabel.toLowerCase()}…
+          {t().market.loadingList(currentLabel.toLowerCase())}
         </Text>
         {themesActive ? (
           <ThemeGridSkeleton
@@ -1344,9 +1348,9 @@ export function DirectorySurface({
         theme={theme}
         tone="error"
         compact={largeTouchTarget}
-        title="Couldn't load the plugin directory"
+        title={t().market.loadFailed}
         body={directoryQuery.error.message}
-        actionLabel="Retry"
+        actionLabel={t().common.retry}
         onAction={() => void directoryQuery.refetch()}
       />
     )
@@ -1355,8 +1359,8 @@ export function DirectorySurface({
       <StateMessage
         theme={theme}
         compact={largeTouchTarget}
-        title="No plugins listed"
-        body="This registry doesn't list any plugins."
+        title={t().market.noPluginsListed}
+        body={t().market.noPluginsListedBody}
       />
     )
   } else if (directory && otherCount > 0 && segmentEntryCount > 0) {
@@ -1364,9 +1368,9 @@ export function DirectorySurface({
       <StateMessage
         theme={theme}
         compact={largeTouchTarget}
-        title={`No ${segmentLabel.toLowerCase()} match`}
-        body={`Nothing in ${segmentLabel} matches the current search and filters.`}
-        actionLabel={`${otherCount} ${otherCount === 1 ? "result" : "results"} in ${otherLabel}`}
+        title={t().market.noMatchTitle(currentLabel.toLowerCase())}
+        body={t().market.noMatchBody(currentLabel.toLowerCase())}
+        actionLabel={t().market.resultsIn(otherCount, otherLabel)}
         onAction={() => setSegment(otherSegment)}
       />
     )
@@ -1375,8 +1379,8 @@ export function DirectorySurface({
       <StateMessage
         theme={theme}
         compact={largeTouchTarget}
-        title={`No ${segmentLabel.toLowerCase()} listed`}
-        body={`This registry doesn't list any ${segmentLabel.toLowerCase()}.`}
+        title={t().market.noListedTitle(currentLabel.toLowerCase())}
+        body={t().market.noListedBody(currentLabel.toLowerCase())}
       />
     )
   } else if (
@@ -1389,8 +1393,8 @@ export function DirectorySurface({
       <StateMessage
         theme={theme}
         compact={largeTouchTarget}
-        title="All up to date"
-        body={`All installed ${segmentLabel.toLowerCase()} are up to date.`}
+        title={t().market.allUpToDate}
+        body={t().market.allUpToDateBody(currentLabel.toLowerCase())}
       />
     )
   } else if (directory) {
@@ -1398,31 +1402,31 @@ export function DirectorySurface({
       <StateMessage
         theme={theme}
         compact={largeTouchTarget}
-        title="No results"
-        body={`No ${segmentLabel.toLowerCase()} match the current search and filters.`}
-        actionLabel={isNarrowed ? "Clear filters" : undefined}
+        title={t().market.noResults}
+        body={t().market.noResultsBody(currentLabel.toLowerCase())}
+        actionLabel={isNarrowed ? t().market.clearFilters : undefined}
         onAction={isNarrowed ? clearFilters : undefined}
       />
     )
   }
 
   const filtersSheet = (
-    <Modal title="Filters" open={filtersOpen} onOpenChange={setFiltersOpen}>
+    <Modal title={t().market.filters} open={filtersOpen} onOpenChange={setFiltersOpen}>
       <Modal.Content>
         <View style={styles.sheet}>
           <OptionGroup
-            label="Show"
+            label={t().market.show}
             accessibilityLabel={`${segmentLabel} installation status`}
-            options={statusOptions}
+            options={statusChoices}
             selected={effectiveStatusFilter}
             theme={theme}
             largeTouchTarget={largeTouchTarget}
             onSelect={setStatusFilter}
           />
           <OptionGroup
-            label="Sort by"
+            label={t().market.sortBy}
             accessibilityLabel={`${segmentLabel} sort order`}
-            options={sortOptions}
+            options={sortChoices}
             selected={sortMode}
             theme={theme}
             largeTouchTarget={largeTouchTarget}
@@ -1431,14 +1435,14 @@ export function DirectorySurface({
           {activeFilterCount > 0 ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Reset status and sort"
+              accessibilityLabel={t().market.resetFilters}
               style={[styles.button, { alignSelf: "flex-start" }]}
               onPress={() => {
                 setStatusFilter(DEFAULT_DIRECTORY_BROWSE_SETTINGS.status)
                 setSortMode(DEFAULT_DIRECTORY_BROWSE_SETTINGS.sort)
               }}
             >
-              <Text style={styles.buttonText}>Reset</Text>
+              <Text style={styles.buttonText}>{t().common.reset}</Text>
             </Pressable>
           ) : null}
         </View>

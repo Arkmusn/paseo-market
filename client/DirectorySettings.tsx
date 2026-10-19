@@ -17,15 +17,31 @@ import {
   directorySettings,
   isTrustedRegistryUrl,
   type MarketSource,
+  MARKET_LANGUAGES,
   registryBase,
   SOURCE_KIND_LABELS,
   SOURCE_KINDS,
+  type MarketLanguage,
   type SourceKind,
 } from "../shared/directory"
+import { t, useMarketLocale } from "./i18n"
 import { summarizeAutomaticUpdates } from "./update-status"
 
-const SOURCES_INFO =
-  "A market source is a browsable plugin directory. Paseo registry reads <url>/index.json; Paseo Cafe reads <url>/api/plugins; Custom JSON auto-detects either shape or a bare array. The URL must use HTTPS, or HTTP on localhost. A GitHub repository page is resolved to its raw files automatically."
+function sourcesInfo(): string {
+  return t().settings.info
+}
+
+const LANGUAGE_LABELS: Record<MarketLanguage, string> = {
+  auto: "",
+  en: "English",
+  zh: "中文",
+}
+
+function languageLabel(language: MarketLanguage): string {
+  return language === "auto"
+    ? t().settings.languageAuto
+    : LANGUAGE_LABELS[language]
+}
 
 /** 该源实际会被读取的地址，用来在输入框下实时展示解析结果。 */
 function readTarget(base: string, kind: SourceKind): string {
@@ -33,13 +49,12 @@ function readTarget(base: string, kind: SourceKind): string {
   return `${base}/index.json`
 }
 
-const KIND_HINTS: Record<SourceKind, string> = {
-  "paseo-registry":
-    "Paseo registry protocol v1: <url>/index.json. Entries install by owner/slug, or by their pinned npm/Git artifact.",
-  "paseo-cafe":
-    "paseo.cafe directory API: <url>/api/plugins. Entries install from their declared npm package or Git repository.",
-  "custom-json":
-    "Any JSON document; the shape is detected per source. Entries install from their declared npm/Git artifact.",
+function kindHints(): Record<SourceKind, string> {
+  return {
+    "paseo-registry": t().settings.kindRegistry,
+    "paseo-cafe": t().settings.kindCafe,
+    "custom-json": t().settings.kindCustom,
+  }
 }
 
 function slugify(value: string): string {
@@ -103,7 +118,64 @@ function KindChips({
   )
 }
 
-export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
+function LanguageChips({
+  theme,
+  value,
+  onChange,
+  disabled,
+}: {
+  theme: PluginTheme
+  value: MarketLanguage
+  onChange: (language: MarketLanguage) => void
+  disabled: boolean
+}) {
+  return (
+    <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
+      {MARKET_LANGUAGES.map((language) => {
+        const selected = language === value
+        const label = languageLabel(language)
+        return (
+          <Pressable
+            key={language}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{ selected, disabled }}
+            disabled={disabled}
+            onPress={() => onChange(language)}
+            style={{
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: selected ? theme.colors.accent : theme.colors.border,
+              backgroundColor: selected
+                ? theme.colors.accent
+                : theme.colors.surface2,
+              opacity: disabled ? 0.5 : 1,
+            }}
+          >
+            <Text
+              style={{
+                color: selected
+                  ? theme.colors.accentForeground
+                  : theme.colors.foreground,
+                fontSize: 13,
+              }}
+            >
+              {label}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+export function DirectorySettings({
+  theme,
+  layout: _layout,
+}: PluginSurfaceProps) {
+  useMarketLocale()
   const settings = useSettings(directorySettings)
   const runAutomaticUpdates = useRpc(directoryRunAutomaticUpdatesRpc)
   const toast = useToast()
@@ -125,17 +197,17 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
 
   if (settings.status === "error" || settings.status === "invalid") {
     return (
-      <SettingsSection title="Plugin market">
-        <SettingsRow label="Market sources" error={settings.error} />
+      <SettingsSection title={t().settings.section}>
+        <SettingsRow label={t().settings.sources} error={settings.error} />
         <SettingsAction
-          label="Try again"
-          actionLabel="Reload"
+          label={t().settings.tryAgain}
+          actionLabel={t().common.reload}
           onPress={settings.reload}
         />
         {settings.status === "invalid" ? (
           <SettingsAction
-            label="Restore default settings"
-            actionLabel="Reset"
+            label={t().settings.restoreDefaultSettings}
+            actionLabel={t().common.reset}
             onPress={() => void settings.reset()}
           />
         ) : null}
@@ -150,7 +222,7 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
     setBusy(true)
     try {
       const ok = await save({ ...values, sources: next }, revision)
-      if (!ok) toast.error("Failed to save market sources.")
+      if (!ok) toast.error(t().settings.saveFailed)
       return ok
     } finally {
       setBusy(false)
@@ -160,7 +232,7 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
   async function addSource() {
     const url = draftUrl.trim()
     if (!isTrustedRegistryUrl(url)) {
-      toast.error("Source URL must use HTTPS, or HTTP on localhost.")
+      toast.error(t().market.urlRejected)
       return
     }
     const baseId = slugify(draftName || url)
@@ -184,7 +256,7 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
     if (await persist(next)) {
       setDraftName("")
       setDraftUrl("")
-      toast.show("Market source added.", { variant: "success" })
+      toast.show(t().settings.sourceAdded, { variant: "success" })
     }
   }
 
@@ -197,20 +269,45 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
       else toast.show(summary.message, { variant: "success" })
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Automatic update run failed."
+        error instanceof Error ? error.message : t().settings.runFailed
       )
     } finally {
       setCheckingUpdates(false)
     }
   }
 
+  async function setLanguage(language: MarketLanguage): Promise<void> {
+    if (language === values.language) return
+    setBusy(true)
+    try {
+      const ok = await save({ ...values, language }, revision)
+      if (!ok) toast.error(t().settings.saveFailed)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <SettingsSection title="Plugin market" info={SOURCES_INFO}>
+    <SettingsSection title={t().settings.section} info={sourcesInfo()}>
+      <SettingsCard>
+        <SettingsRow
+          label={t().settings.language}
+          hint={t().settings.languageHint}
+        />
+        <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+          <LanguageChips
+            theme={theme}
+            value={values.language}
+            onChange={(language) => void setLanguage(language)}
+            disabled={disabled}
+          />
+        </View>
+      </SettingsCard>
       {values.sources.length === 0 ? (
         <SettingsCard>
           <SettingsRow
-            label="No market sources"
-            hint="Add one below, or restore the defaults."
+            label={t().settings.noSources}
+            hint={t().settings.noSourcesHint}
           />
         </SettingsCard>
       ) : null}
@@ -222,9 +319,9 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
             hint={`${SOURCE_KIND_LABELS[source.kind]} · ${source.url}`}
           />
           <SettingsAction
-            label={source.enabled ? "Enabled" : "Disabled"}
-            hint="Disabled sources are not fetched."
-            actionLabel={source.enabled ? "Disable" : "Enable"}
+            label={source.enabled ? t().settings.enabled : t().settings.disabled}
+            hint={t().settings.disabledHint}
+            actionLabel={source.enabled ? t().common.disable : t().common.enable}
             disabled={disabled}
             onPress={() =>
               void persist(
@@ -237,8 +334,8 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
             }
           />
           <SettingsAction
-            label="Remove this source"
-            actionLabel="Remove"
+            label={t().settings.removeSource}
+            actionLabel={t().common.remove}
             disabled={disabled}
             onPress={() =>
               void persist(
@@ -249,27 +346,27 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
         </SettingsCard>
       ))}
 
-      <SettingsSection title="Add a market source">
+      <SettingsSection title={t().settings.addSource}>
         <SettingsCard>
-          <SettingsRow label="Type" hint={KIND_HINTS[draftKind]} />
+          <SettingsRow label={t().settings.type} hint={kindHints()[draftKind]} />
           <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
             <KindChips
-              theme={_theme}
+              theme={theme}
               value={draftKind}
               onChange={setDraftKind}
               disabled={disabled}
             />
           </View>
           <SettingsInput
-            label="Name"
-            hint="Shown in the source filter. Optional."
+            label={t().settings.name}
+            hint={t().settings.nameHint}
             initialValue=""
-            placeholder="e.g. Company registry"
+            placeholder={t().settings.namePlaceholder}
             onChangeText={setDraftName}
             disabled={disabled}
           />
           <SettingsInput
-            label="Source URL"
+            label={t().settings.sourceUrl}
             hint={
               resolvedBase
                 ? `Will read ${readTarget(resolvedBase, draftKind)}`
@@ -282,8 +379,8 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
             error={saveError}
           />
           <SettingsAction
-            label="Add to the market sources"
-            actionLabel={busy || saving ? "Adding…" : "Add"}
+            label={t().settings.addToSources}
+            actionLabel={busy || saving ? t().common.adding : t().common.add}
             disabled={disabled}
             onPress={() => void addSource()}
           />
@@ -292,15 +389,15 @@ export function DirectorySettings({ theme: _theme }: PluginSurfaceProps) {
 
       <SettingsCard>
         <SettingsAction
-          label="Restore the built-in registry and Cafe sources"
-          actionLabel="Restore defaults"
+          label={t().settings.restoreBuiltins}
+          actionLabel={t().settings.restoreDefaults}
           disabled={disabled}
           onPress={() => void persist(DEFAULT_SOURCES)}
         />
         <SettingsAction
-          label="Run automatic updates now"
-          hint="Installed plugins update on their own every 6 hours unless automatic updates are off for them."
-          actionLabel={checkingUpdates ? "Running…" : "Run now"}
+          label={t().settings.runUpdates}
+          hint={t().settings.runUpdatesHint}
+          actionLabel={checkingUpdates ? t().settings.running : t().settings.runNow}
           disabled={checkingUpdates}
           onPress={() => void runUpdatesNow()}
         />

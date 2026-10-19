@@ -18,6 +18,7 @@
 - **受审阅的安装锚点**:安装前展示将要执行的命令与固定 commit;目录上的锚点若在确认后变动,安装会被拒绝
 - **自动更新**:默认开启,daemon 启动 30 秒后检查,之后每 6 小时一次;可按插件关闭,也可在设置里立即执行
 - **侧边栏徽标**:有可用更新时,Plugins 侧边栏项显示更新数量
+- **界面中英双语**:设置里可切换「自动 / English / 中文」,默认跟随系统;条目正文(各插件的 README)保持其自身语言,不做翻译
 - **附件来源**:把插件条目作为附件发给 agent,让它在安装前审阅
 
 ## 安装
@@ -76,6 +77,7 @@ A screen inside Paseo for managing plugins: it aggregates several plugin directo
 - **Reviewed install anchors**: the exact command and pinned commit are shown before installing; if the catalog's anchor moves after you confirm, the install is refused.
 - **Automatic updates**: on by default; checked 30 seconds after the daemon starts and every 6 hours after that. Opt out per plugin, or run a check immediately from settings.
 - **Sidebar badge**: the Plugins sidebar item shows the number of pending updates.
+- **English and Chinese interface**: switch between Automatic, English and 中文 under Language in settings; listing bodies such as READMEs stay in the language the plugin provides.
 - **Attachment source**: attach a listing to a prompt so an agent can review it before you install.
 
 ## Install

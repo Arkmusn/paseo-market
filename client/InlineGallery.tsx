@@ -1,3 +1,4 @@
+import { t } from "./i18n"
 import type { PluginTheme } from "@getpaseo/plugin"
 import { Icon, ScrollView } from "@getpaseo/plugin/client/react-native"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -209,7 +210,7 @@ export function InlineGallery({
                         style={styles.videoTile}
                         onPress={onOpenGallery}
                       >
-                        <Text style={styles.videoText}>Video</Text>
+                        <Text style={styles.videoText}>{t().gallery.video}</Text>
                       </Pressable>
                     ) : (
                       <Pressable

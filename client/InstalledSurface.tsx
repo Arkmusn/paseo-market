@@ -16,15 +16,16 @@ import {
   type InstalledPlugin,
   type PluginUpdate,
 } from "../shared/directory"
+import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
 import { radius, space } from "./visual"
 
 const INSTALLED_QUERY_KEY = "paseo-market-installed"
 
-const STATUS_LABELS: Record<InstalledPlugin["status"], string> = {
-  running: "Running",
-  disabled: "Disabled",
-  failed: "Failed",
+function statusLabel(status: InstalledPlugin["status"]): string {
+  if (status === "running") return t().installed.running
+  if (status === "failed") return t().installed.failed
+  return t().installed.disabled
 }
 
 function StatusPill({
@@ -108,6 +109,7 @@ export function InstalledSurface({
   /** Switches the shared screen back to the market. */
   onShowMarket?: () => void
 }) {
+  useMarketLocale()
   const listDirectory = useRpc(directoryListRpc)
   const listUpdateStatus = useRpc(directoryUpdateStatusRpc)
   const uninstall = useRpc(directoryUninstallRpc)
@@ -176,8 +178,7 @@ export function InstalledSurface({
             paddingBottom: space.sm,
           }}
         >
-          The `paseo` CLI on the daemon is unavailable or too old; install,
-          uninstall, and update may fail.
+          {t().installed.cliUnavailable}
         </Text>
       ) : null}
 
@@ -188,17 +189,17 @@ export function InstalledSurface({
         ListHeaderComponent={
           <View style={{ gap: space.sm, paddingBottom: space.sm }}>
             <Text role="heading" aria-level={1} style={{ color: theme.colors.foreground, fontSize: 20, lineHeight: 28, fontWeight: "600" }}>
-              Installed plugins
+              {t().installed.title}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" }}>
               <Action
-                label="Browse the plugin market"
+                label={t().installed.browseMarket}
                 theme={theme}
                 onPress={() => onShowMarket?.()}
               />
               <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
-                {installations.length} installed
-                {updateCount > 0 ? ` · ${updateCount} update${updateCount === 1 ? "" : "s"} available` : ""}
+                {t().installed.count(installations.length)}
+                {updateCount > 0 ? t().installed.updatesAvailable(updateCount) : ""}
               </Text>
             </View>
           </View>
@@ -212,10 +213,10 @@ export function InstalledSurface({
             }}
           >
             {installedQuery.isLoading
-              ? "Reading installed plugins…"
+              ? t().installed.reading
               : installedQuery.isError
-                ? "Couldn't read installed plugins."
-                : "No plugins are installed yet."}
+                ? t().installed.readFailed
+                : t().installed.empty}
           </Text>
         }
         renderItem={({ item }) => (
@@ -287,9 +288,9 @@ function InstalledRow({
           <Text style={{ color: theme.colors.foreground, fontSize: 15, fontWeight: "600" }}>
             {item.id}
           </Text>
-          <StatusPill label={STATUS_LABELS[item.status]} theme={theme} tone={statusTone} />
+          <StatusPill label={statusLabel(item.status)} theme={theme} tone={statusTone} />
           <StatusPill label={item.kind} theme={theme} tone="neutral" />
-          {hasUpdate ? <StatusPill label="Update available" theme={theme} tone="accent" /> : null}
+          {hasUpdate ? <StatusPill label={t().installed.updateAvailable} theme={theme} tone="accent" /> : null}
         </View>
         {item.revision ? (
           <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
@@ -298,27 +299,27 @@ function InstalledRow({
         ) : null}
         {item.registryId ? (
           <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
-            From the market: {item.registryId}
+            {t().installed.fromMarket(item.registryId)}
           </Text>
         ) : null}
       </View>
       <View style={{ flexDirection: "row", gap: space.sm, flexWrap: "wrap" }}>
         <Action
-          label={item.enabled ? "Disable" : "Enable"}
+          label={item.enabled ? t().common.disable : t().common.enable}
           theme={theme}
           tone={item.enabled ? "danger" : "success"}
           onPress={onToggle}
           disabled={busy}
         />
-        <Action label="Reload" theme={theme} onPress={onReload} disabled={busy} />
+        <Action label={t().common.reload} theme={theme} onPress={onReload} disabled={busy} />
         <Action
-          label="Update"
+          label={t().common.update}
           theme={theme}
           tone={hasUpdate ? "accent" : "neutral"}
           onPress={onUpdate}
           disabled={busy}
         />
-        <Action label="Uninstall" theme={theme} tone="danger" onPress={onUninstall} disabled={busy} />
+        <Action label={t().common.uninstall} theme={theme} tone="danger" onPress={onUninstall} disabled={busy} />
       </View>
     </View>
   )

@@ -7,6 +7,7 @@ import {
   countAvailableUpdates,
   directoryUpdateStatusRpc,
 } from "../shared/directory"
+import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
 import { radius } from "./visual"
 
@@ -43,9 +44,7 @@ function UpdateBadge({
     >
       <Text
         accessibilityLabel={
-          failed
-            ? "Plugin update check failed"
-            : `${count} plugin ${count === 1 ? "update" : "updates"} available`
+          failed ? t().sidebar.checkFailed : t().sidebar.updatesAvailable(count)
         }
         style={{
           color: failed ? theme.colors.surface0 : theme.colors.accentForeground,
@@ -69,6 +68,7 @@ export function PluginsSidebarItem({
   currentScreen,
   openScreen,
 }: PluginSidebarItemProps) {
+  useMarketLocale()
   const listUpdateStatus = useRpc(directoryUpdateStatusRpc)
   const { data, isError } = useQuery({
     queryKey: UPDATE_STATUS_QUERY_KEY,

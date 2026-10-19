@@ -404,6 +404,7 @@ describe("settings", () => {
     expect(parsed).toEqual({
       sources: DEFAULT_SOURCES,
       autoUpdateOptOuts: ["review"],
+      language: "auto",
       browse: {
         query: "theme",
         categories: [],
@@ -430,6 +431,7 @@ describe("settings", () => {
         enabled: true,
       },
     ])
+    expect(parsed.language).toBe("auto")
   })
 
   it("leaves a current document alone", () => {

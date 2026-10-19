@@ -1,3 +1,4 @@
+import { t } from "./i18n"
 import type { PluginTheme } from "@getpaseo/plugin"
 import { useMemo } from "react"
 import { Pressable, Text, View } from "react-native"
@@ -58,15 +59,15 @@ export function getPluginRowStatus(
   if (available > 0) {
     return {
       text:
-        available === 1 ? "Update available" : `${available} updates available`,
+        available === 1 ? t().installed.updateAvailable : t().market.updatesAvailable(available),
       tone: "update",
     }
   }
   return {
     text:
       installations.length === 1
-        ? "Installed"
-        : `${installations.length} installations`,
+        ? t().common.installed
+        : t().market.installations(installations.length),
     tone: "installed",
   }
 }
@@ -77,10 +78,9 @@ export function getPluginRowInstalls(
 ): { text: string; accessibilityLabel: string } | undefined {
   const { installs } = entry
   if (installs === undefined) return undefined
-  const noun = installs === 1 ? "install" : "installs"
   return {
-    text: `${formatCatalogCompactCount(installs)} ${noun}`,
-    accessibilityLabel: `${installs} ${noun}`,
+    text: t().market.installs(installs).replace(String(installs), formatCatalogCompactCount(installs)),
+    accessibilityLabel: t().market.installs(installs),
   }
 }
 
@@ -90,7 +90,8 @@ export function getPluginRowDateBadge(
   dateBadge: PluginRowDateBadge | undefined
 ): string | undefined {
   if (dateBadge === undefined) return undefined
-  const label = dateBadge === "updated" ? "Updated" : "Added"
+  const label =
+    dateBadge === "updated" ? t().market.badgeUpdated : t().market.badgeAdded
   const formatted = formatCatalogDateForReader(
     dateBadge === "updated" ? entry.updatedAt : entry.publishedAt
   )
@@ -212,7 +213,7 @@ export function PluginRow({
           numberOfLines={1}
           style={description ? styles.description : styles.descriptionEmpty}
         >
-          {description || "No description provided."}
+          {description || t().market.noDescription}
         </Text>
         {meta || installs ? (
           <View style={styles.metaRow}>

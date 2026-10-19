@@ -32,6 +32,7 @@ import {
   SUBMIT_URL,
 } from "../shared/directory"
 import { AspectImage } from "./AspectImage"
+import { t, useMarketLocale } from "./i18n"
 import { getDetailPrimaryAction } from "./detail-action"
 import { ExpandableSection } from "./ExpandableSection"
 import { InlineGallery } from "./InlineGallery"
@@ -521,6 +522,7 @@ export function PluginDetailPage({
   onOpenGallery,
   onBack,
 }: PluginDetailPageProps) {
+  useMarketLocale()
   const toast = useToast()
   const [confirmingInstall, setConfirmingInstall] = useState(false)
   const [confirmingUpdate, setConfirmingUpdate] =
@@ -630,17 +632,17 @@ export function PluginDetailPage({
         : "Plain text"
 
   const repositoryLink: TextLinkSpec = {
-    label: "View repository",
+    label: t().detail.viewRepository,
     accessibilityLabel: `Open ${entry.name} repository`,
     url: entry.repository.url,
   }
   const reportLink: TextLinkSpec = {
-    label: "Report plugin",
+    label: t().detail.reportPlugin,
     accessibilityLabel: `Report ${entry.name} on GitHub`,
     url: getReportPluginIssueUrl(entry.id),
   }
   const siteLink: TextLinkSpec = {
-    label: "View listing",
+    label: t().detail.viewListing,
     accessibilityLabel: `Open the ${entry.name} listing`,
     url: entry.repository.url || getSiteUrl(entry.id),
   }
@@ -694,10 +696,10 @@ export function PluginDetailPage({
         fill: compact,
         label:
           updatingId !== null
-            ? "Updating…"
+            ? t().detail.updating
             : primaryAction.count > 1
-              ? `Update (${primaryAction.count})`
-              : "Update",
+              ? `${t().common.update} (${primaryAction.count})`
+              : t().common.update,
         accessibilityLabel:
           primaryAction.count > 1
             ? `Review the update of ${entry.name} installation ${primaryAction.target.id}, ${primaryAction.count} installations have updates`
@@ -720,7 +722,7 @@ export function PluginDetailPage({
           ]}
         >
           <Icon name="Check" size={16} color={theme.colors.statusSuccess} />
-          <Text style={styles.secondaryButtonText}>Installed</Text>
+          <Text style={styles.secondaryButtonText}>{t().common.installed}</Text>
         </Pressable>
       )
     }
@@ -746,12 +748,12 @@ export function PluginDetailPage({
       >
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back to Plugin market"
+          accessibilityLabel={t().detail.backToMarket}
           style={styles.backRow}
           onPress={onBack}
         >
           <Icon name="ArrowLeft" size={16} color={theme.colors.foreground} />
-          <Text style={styles.backText}>Plugin market</Text>
+          <Text style={styles.backText}>{t().detail.market}</Text>
         </Pressable>
 
         {heroUrl ? (
@@ -863,15 +865,15 @@ export function PluginDetailPage({
         ) : null}
 
         <ExpandableSection
-          title="README"
+          title={t().detail.readme}
           subtitle={readmeSubtitle}
           theme={theme}
         >
           {readme.isPending ? (
-            <Text style={styles.alertBodyOnCard}>Loading README…</Text>
+            <Text style={styles.alertBodyOnCard}>{t().detail.loadingReadme}</Text>
           ) : readme.isError ? (
             <View style={styles.section}>
-              <Text style={styles.errorText}>Could not load the README.</Text>
+              <Text style={styles.errorText}>{t().detail.readmeFailed}</Text>
               <Text selectable style={styles.errorDetails}>
                 {readme.error instanceof Error
                   ? readme.error.message
@@ -888,7 +890,7 @@ export function PluginDetailPage({
                   size={14}
                   color={theme.colors.foreground}
                 />
-                <Text style={styles.errorActionText}>Retry</Text>
+                <Text style={styles.errorActionText}>{t().common.retry}</Text>
               </Pressable>
             </View>
           ) : readmeText === "" ? (
@@ -904,7 +906,7 @@ export function PluginDetailPage({
                 style={styles.errorAction}
               >
                 <Icon name="Copy" size={14} color={theme.colors.foreground} />
-                <Text style={styles.errorActionText}>Copy text</Text>
+                <Text style={styles.errorActionText}>{t().detail.copyText}</Text>
               </Pressable>
               <View style={styles.readmeViewer}>
                 <Text selectable style={styles.readmeText}>
@@ -979,7 +981,7 @@ export function PluginDetailPage({
                   {installation.kind !== "directory" ? (
                     <Pressable
                       accessibilityRole="switch"
-                      accessibilityLabel={`Automatic updates for ${installation.id}`}
+                      accessibilityLabel={`{t().detail.automaticUpdates} for ${installation.id}`}
                       accessibilityState={{
                         checked: !optedOut,
                         disabled: switchDisabled,
@@ -994,7 +996,7 @@ export function PluginDetailPage({
                         onAutoUpdateChange(installation.id, optedOut)
                       }
                     >
-                      <Text style={styles.switchLabel}>Automatic updates</Text>
+                      <Text style={styles.switchLabel}>{t().detail.automaticUpdates}</Text>
                       <View style={styles.switchControl}>
                         <Text style={styles.switchState}>
                           {optedOut ? "Off" : "On"}
@@ -1021,7 +1023,7 @@ export function PluginDetailPage({
                         primary: true,
                         label:
                           updatingId === installation.id
-                            ? "Updating…"
+                            ? t().detail.updating
                             : update.target
                               ? `Update to ${shortenRevision(update.target)}`
                               : "Update",
@@ -1081,12 +1083,12 @@ export function PluginDetailPage({
               ) : null}
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Copy action error output"
+                accessibilityLabel={t().detail.copyErrorOutput}
                 onPress={() => copy(actionError, "Copied action error output")}
                 style={styles.errorAction}
               >
                 <Icon name="Copy" size={14} color={theme.colors.foreground} />
-                <Text style={styles.errorActionText}>Copy error</Text>
+                <Text style={styles.errorActionText}>{t().detail.copyError}</Text>
               </Pressable>
             </View>
           </View>
@@ -1103,7 +1105,7 @@ export function PluginDetailPage({
               </Text>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Copy install command"
+                accessibilityLabel={t().detail.copyInstallCommand}
                 style={styles.copyButton}
                 onPress={() => copy(installCommand, "Copied install command")}
               >
@@ -1162,7 +1164,7 @@ export function PluginDetailPage({
       ) : null}
 
       <Modal
-        title={`Review ${entry.name} installation`}
+        title={t().detail.reviewInstall(entry.name)}
         icon={
           <Icon name="Download" size={18} color={theme.colors.foreground} />
         }
@@ -1173,7 +1175,7 @@ export function PluginDetailPage({
           {reviewFields.map(([label, value]) => renderField(label, value))}
           {installCommand ? (
             <View style={styles.section}>
-              <Text style={styles.fieldLabel}>Install command</Text>
+              <Text style={styles.fieldLabel}>{t().detail.installCommand}</Text>
               <View style={styles.commandRow}>
                 <Text selectable style={styles.command}>
                   {installCommand}
@@ -1182,8 +1184,7 @@ export function PluginDetailPage({
             </View>
           ) : null}
           <Text style={styles.modalText}>
-            Paseo installs exactly this artifact. If the registry pin changes
-            before you confirm, the install is refused.
+            {t().detail.installBody}
           </Text>
           <View style={styles.alert}>
             <View style={styles.alertTitleRow}>
@@ -1192,12 +1193,10 @@ export function PluginDetailPage({
                 size={14}
                 color={theme.colors.statusWarning}
               />
-              <Text style={styles.alertTitle}>Trusted, unsandboxed code</Text>
+              <Text style={styles.alertTitle}>{t().detail.trustedCode}</Text>
             </View>
             <Text style={styles.alertBodyOnCard}>
-              Plugin server code, build commands, dependencies, and future
-              updates run as trusted code on the Paseo host. Review the source
-              before installing.
+              {t().detail.trustedBody}
             </Text>
           </View>
           <View style={styles.actionsRow}>
@@ -1208,13 +1207,13 @@ export function PluginDetailPage({
               onPress: () => openExternal(repositoryLink.url),
             })}
             {renderButton({
-              label: "Cancel",
+              label: t().detail.cancel,
               accessibilityLabel: "Cancel installation",
               onPress: () => setConfirmingInstall(false),
             })}
             {renderButton({
               primary: true,
-              label: installing ? "Installing…" : "Install",
+              label: installing ? t().detail.installing : t().common.install,
               accessibilityLabel: `Confirm installation of ${entry.name}`,
               disabled: actionPending || !installSupported,
               onPress: () => {
@@ -1227,7 +1226,7 @@ export function PluginDetailPage({
       </Modal>
 
       <Modal
-        title={`Update ${entry.name}?`}
+        title={t().detail.updateTitle(entry.name)}
         icon={
           <Icon name="RefreshCw" size={18} color={theme.colors.foreground} />
         }
@@ -1239,18 +1238,18 @@ export function PluginDetailPage({
         <Modal.Content contentContainerStyle={styles.modalBody}>
           <Text style={styles.modalTitle}>{confirmingUpdate?.id}</Text>
           {renderField(
-            "Installed",
-            confirmingUpdate?.revision ?? "unknown revision",
+            t().common.installed,
+            confirmingUpdate?.revision ?? t().detail.unknownRevision,
             Boolean(confirmingUpdate?.revision)
           )}
           {renderField(
-            "Update to",
-            confirmingUpdateTarget ?? "the latest pinned release",
+            t().detail.updateTo,
+            confirmingUpdateTarget ?? t().detail.latestPinned,
             Boolean(confirmingUpdateTarget)
           )}
           {confirmingUpdate ? (
             <View style={styles.section}>
-              <Text style={styles.fieldLabel}>Update command</Text>
+              <Text style={styles.fieldLabel}>{t().detail.updateCommand}</Text>
               <View style={styles.commandRow}>
                 <Text selectable style={styles.command}>
                   {getUpdateCommand(confirmingUpdate.id)}
@@ -1260,13 +1259,11 @@ export function PluginDetailPage({
           ) : null}
           {confirmingUpdate?.id === SELF_INSTALLATION_ID ? (
             <Text style={styles.modalText}>
-              The plugin market restarts when this update finishes, so the result
-              appears once it reloads.
+              {t().detail.updatingSelf}
             </Text>
           ) : null}
           <Text style={styles.modalText}>
-            Updating replaces trusted, unsandboxed plugin code on this Paseo
-            host. Review the source before continuing.
+            {t().detail.updateBody}
           </Text>
           <View style={styles.actionsRow}>
             {renderButton({
@@ -1276,13 +1273,13 @@ export function PluginDetailPage({
               onPress: () => openExternal(repositoryLink.url),
             })}
             {renderButton({
-              label: "Cancel",
+              label: t().detail.cancel,
               accessibilityLabel: "Cancel update",
               onPress: () => setConfirmingUpdate(null),
             })}
             {renderButton({
               primary: true,
-              label: updatingId ? "Updating…" : "Update",
+              label: updatingId ? t().detail.updating : t().common.update,
               accessibilityLabel: `Confirm update of ${entry.name}`,
               disabled: actionPending,
               onPress: () => {

@@ -1,3 +1,4 @@
+import { t } from "./i18n"
 import type {
   DirectoryBrowseSettings,
   DirectoryCategory,
@@ -200,7 +201,5 @@ export function splitThemes<T extends { categories: readonly string[] }>(
 
 export function invalidListingsNotice(count: number): string | null {
   if (count <= 0) return null
-  return count === 1
-    ? "1 listing failed validation and is hidden."
-    : `${count} listings failed validation and are hidden.`
+  return t().market.invalidListings(count)
 }

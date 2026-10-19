@@ -399,16 +399,21 @@ export function migrateDirectorySettings(
   }
 }
 
+/** 界面语言；auto 跟随系统（无法判断时用英文）。 */
+export const MARKET_LANGUAGES = ["auto", "en", "zh"] as const
+export type MarketLanguage = (typeof MARKET_LANGUAGES)[number]
+
 export const directorySettings = defineSettings({
   id: "directory-settings",
   scope: "host",
-  version: 6,
+  version: 7,
   schema: z.object({
     sources: z.array(marketSourceSchema).max(50).default(DEFAULT_SOURCES),
     browse: directoryBrowseSettingsSchema.default(
       DEFAULT_DIRECTORY_BROWSE_SETTINGS
     ),
     autoUpdateOptOuts: z.array(installationIdSchema).max(500).default([]),
+    language: z.enum(MARKET_LANGUAGES).default("auto"),
   }),
   migrate: migrateDirectorySettings,
 })

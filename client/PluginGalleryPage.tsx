@@ -1,3 +1,4 @@
+import { t } from "./i18n"
 import type { PluginTheme } from "@getpaseo/plugin"
 import { Icon, ScrollView } from "@getpaseo/plugin/client/react-native"
 import { useMemo } from "react"
@@ -115,7 +116,7 @@ export function PluginGalleryPage({
                   size={16}
                   color={theme.colors.foreground}
                 />
-                <Text style={styles.videoText}>Open video</Text>
+                <Text style={styles.videoText}>{t().gallery.openVideo}</Text>
               </Pressable>
             ) : (
               <View key={url} style={styles.fullSize}>
@@ -136,7 +137,7 @@ export function PluginGalleryPage({
                   style={styles.fullSizeLink}
                   onPress={() => openExternal(url)}
                 >
-                  <Text style={styles.fullSizeText}>Open full size</Text>
+                  <Text style={styles.fullSizeText}>{t().gallery.openFullSize}</Text>
                 </Pressable>
               </View>
             )
