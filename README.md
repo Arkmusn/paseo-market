@@ -26,7 +26,7 @@ Install it from the plugin market inside Paseo, or run:
 paseo plugin add git:Arkmusn/paseo-plugin-management
 ```
 
-Requires Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's path. The installed plugin id is `paseo-plugin-management`.
+Requires Paseo 0.11.0 or later and the `paseo` command on the daemon's path. The installed plugin id is `paseo-plugin-management`.
 
 ## Adding a market source: accepted URL forms
 

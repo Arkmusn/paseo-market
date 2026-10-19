@@ -26,7 +26,7 @@
 paseo plugin add git:Arkmusn/paseo-plugin-management
 ```
 
-需要 Paseo 0.11.0-beta.4 或更高版本,且 daemon 的 PATH 上有 `paseo` 命令。安装后的插件 id 是 `paseo-plugin-management`。
+需要 Paseo 0.11.0 或更高版本,且 daemon 的 PATH 上有 `paseo` 命令。安装后的插件 id 是 `paseo-plugin-management`。
 
 ## 添加市场源:支持的地址形式
 

@@ -17,7 +17,7 @@ If a source cannot be reached, the market keeps showing the listings from the so
 
 The daemon downloads each enabled source and caches it for five minutes. A listing's overview is fetched from the same source when you open it. Screenshots and icons are loaded by your Paseo app straight from the URLs each listing declares, which are usually GitHub or a package CDN, so those hosts see your request.
 
-Installing, updating, enabling, disabling, reloading and uninstalling run the `paseo` command line on the daemon host. Before an install, the app shows the pinned npm version or Git commit and the repository it comes from, and you confirm. The daemon then installs exactly that reviewed artifact. If the directory moves the pin after you opened the review, the install is refused.
+Installing, updating, enabling, disabling, reloading and uninstalling run the `paseo` command line on the daemon host. Before an install, the app shows the pinned npm version or Git commit and the repository it comes from, and you confirm. The daemon then installs exactly that reviewed artifact. If the directory moves the pin after you opened the review, the install is refused. Nothing is installed on its own: every install, update, enable, disable, reload and uninstall is an action you start.
 
 ## Language
 
@@ -25,18 +25,14 @@ The interface ships in English and Chinese. paseo-plugin-management settings hav
 
 ## Setup
 
-paseo-plugin-management needs Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's path.
+paseo-plugin-management needs Paseo 0.11.0 or later and the `paseo` command on the daemon's path.
 
 ## Capabilities and limits
 
 - Automatic updates are on by default for every installed plugin, including paseo-plugin-management. The daemon checks 30 seconds after it starts and then every six hours, moves each plugin to its current directory pin, or to the latest release of the npm package or Git source it was installed from, and keeps going if one plugin fails. Turn them off for a single plugin from its detail page, or run the check immediately from paseo-plugin-management's settings.
 - The market sidebar item shows the number of plugins with an update available.
 - The installed view lists everything you installed, with enable, disable, reload, update and uninstall actions and the state each plugin reported.
-- A composer attachment source lets you attach a plugin's listing to a prompt, so an agent can review it before you install.
+- A composer attachment source lets you attach a plugin's listing to a prompt, so an agent can review it before you install. The listing text then becomes part of that prompt and reaches the agent provider the way your other messages do.
 - paseo-plugin-management stores your sources, your last search and filters, the list of plugins excluded from automatic updates and the plugins you disabled in its Paseo settings. It contacts only the sources you enabled; installs and updates fetch the artifact from npm or Git the way the `paseo` command normally does.
 - Plugins installed from npm or Git before the directory existed are recognized by package name or repository, and shown as installed when they match a listing.
 - Listed plugins are community submissions. They still run unsandboxed on your daemon host, so read a plugin's source before installing it.
-
-## Fork
-
-paseo-plugin-management is a modified fork of Paseo Cafe, licensed under the Apache License, Version 2.0. See `NOTICE` for the changes made in this fork.
