@@ -625,7 +625,7 @@ async function loadFromNetwork(source: MarketSource): Promise<LoadedSource> {
       catalog.plugins,
       normalizeCafeEntry,
       catalog.generatedAt ?? fetchedAt,
-      source.name || "Paseo Cafe",
+      source.name || source.id,
       [],
       []
     )
@@ -635,7 +635,7 @@ async function loadFromNetwork(source: MarketSource): Promise<LoadedSource> {
     const parsed = await fetchRegistryJson(base)
     let rows: unknown[] = []
     let declared: DirectoryCategory[] = []
-    let name = source.name || source.id
+    const name = source.name || source.id
     let isRegistry = false
     if (Array.isArray(parsed)) {
       rows = parsed
@@ -648,10 +648,6 @@ async function loadFromNetwork(source: MarketSource): Promise<LoadedSource> {
       }
       rows = record.plugins
       isRegistry = "schemaVersion" in record || "registry" in record
-      if (record.registry && typeof record.registry === "object") {
-        const registryName = (record.registry as Record<string, unknown>).name
-        if (typeof registryName === "string") name = registryName
-      }
       if (Array.isArray(record.categories)) {
         declared =
           z
@@ -703,7 +699,7 @@ async function loadFromNetwork(source: MarketSource): Promise<LoadedSource> {
     index.plugins,
     normalizeRegistryEntry,
     index.generatedAt ?? fetchedAt,
-    index.registry?.name ?? source.name,
+    source.name || source.id,
     declared,
     featured
   )
