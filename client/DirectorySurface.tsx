@@ -923,6 +923,18 @@ export function DirectorySurface({
         flexWrap: "wrap" as const,
         gap: space.sm,
       },
+      filterRow: {
+        flexDirection: "row" as const,
+        alignItems: "flex-start" as const,
+        gap: space.sm,
+      },
+      filterLabel: {
+        color: muted,
+        fontSize: 12,
+        lineHeight: 18,
+        paddingTop: 6,
+      },
+      filterChips: { flex: 1 },
       chipStrip: {
         flexDirection: "row" as const,
         alignItems: "center" as const,
@@ -1214,31 +1226,42 @@ export function DirectorySurface({
       ) : null}
 
       {sourceChipElements ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipStrip}
-          accessibilityLabel={t().market.sourceFilter}
-        >
-          {sourceChipElements}
-        </ScrollView>
-      ) : null}
-
-      {!themesActive && categoryChipElements ? (
-        layout.compact ? (
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>{t().market.sourceLabel}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            accessibilityLabel={t().market.categories}
+            style={styles.filterChips}
             contentContainerStyle={styles.chipStrip}
+            accessibilityLabel={t().market.sourceFilter}
           >
-            {categoryChipElements}
+            {sourceChipElements}
           </ScrollView>
-        ) : (
-          <View accessibilityLabel={t().market.categories} style={styles.chipWrap}>
-            {categoryChipElements}
-          </View>
-        )
+        </View>
+      ) : null}
+
+      {!themesActive && categoryChipElements ? (
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>{t().market.categoryLabel}</Text>
+          {layout.compact ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              accessibilityLabel={t().market.categories}
+              style={styles.filterChips}
+              contentContainerStyle={styles.chipStrip}
+            >
+              {categoryChipElements}
+            </ScrollView>
+          ) : (
+            <View
+              accessibilityLabel={t().market.categories}
+              style={[styles.filterChips, styles.chipWrap]}
+            >
+              {categoryChipElements}
+            </View>
+          )}
+        </View>
       ) : null}
 
       {settingsPending ? (
