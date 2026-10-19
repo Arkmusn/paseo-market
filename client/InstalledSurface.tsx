@@ -68,14 +68,16 @@ function Action({
   theme: PluginTheme
   onPress: () => void
   disabled?: boolean
-  tone?: "neutral" | "danger" | "accent"
+  tone?: "neutral" | "success" | "danger" | "accent"
 }) {
   const color =
     tone === "danger"
       ? theme.colors.statusDanger
-      : tone === "accent"
-        ? theme.colors.accent
-        : theme.colors.foreground
+      : tone === "success"
+        ? theme.colors.statusSuccess
+        : tone === "accent"
+          ? theme.colors.accent
+          : theme.colors.foreground
   return (
     <Pressable
       accessibilityRole="button"
@@ -301,7 +303,13 @@ function InstalledRow({
         ) : null}
       </View>
       <View style={{ flexDirection: "row", gap: space.sm, flexWrap: "wrap" }}>
-        <Action label={item.enabled ? "Disable" : "Enable"} theme={theme} onPress={onToggle} disabled={busy} />
+        <Action
+          label={item.enabled ? "Disable" : "Enable"}
+          theme={theme}
+          tone={item.enabled ? "danger" : "success"}
+          onPress={onToggle}
+          disabled={busy}
+        />
         <Action label="Reload" theme={theme} onPress={onReload} disabled={busy} />
         <Action
           label="Update"
