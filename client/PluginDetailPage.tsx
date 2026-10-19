@@ -534,7 +534,7 @@ export function PluginDetailPage({
   const styles = useMemo(() => createStyles(theme, compact), [theme, compact])
   const readDetail = useRpc(directoryDetailRpc)
   const readme = useQuery({
-    queryKey: ["paseo-market-readme", sourceId, entry.id],
+    queryKey: ["paseo-plugin-management-readme", sourceId, entry.id],
     queryFn: () => readDetail({ sourceId, id: entry.id }),
     staleTime: 5 * 60_000,
     retry: 1,

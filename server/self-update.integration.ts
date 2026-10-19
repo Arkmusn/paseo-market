@@ -118,7 +118,7 @@ async function main(): Promise<void> {
     // its own settings, so the built-in pair is what an unconfigured install
     // reports.
     const listed = (await client.invokePluginRpc(
-      "paseo-market",
+      "paseo-plugin-management",
       "directory.list",
       { force: true }
     )) as { sources?: unknown[] }

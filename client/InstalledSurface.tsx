@@ -20,7 +20,7 @@ import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
 import { radius, space } from "./visual"
 
-const INSTALLED_QUERY_KEY = "paseo-market-installed"
+const INSTALLED_QUERY_KEY = "paseo-plugin-management-installed"
 
 function statusLabel(status: InstalledPlugin["status"]): string {
   if (status === "running") return t().installed.running

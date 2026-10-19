@@ -7,7 +7,7 @@ licensed under the Apache License, Version 2.0.
 
 Modifications by Arkmusn, 2026:
 - Renamed the product from "Paseo Cafe" to "Plugin market" and changed the
-  plugin id from "paseo-cafe" to "paseo-market".
+  plugin id from "paseo-cafe" to "paseo-plugin-management".
 - Replaced the single-registry model with multiple market sources: the official
   Paseo registry, the Paseo Cafe directory, and user-added custom JSON sources
   that auto-detect either shape.

@@ -17,7 +17,7 @@ export const REGISTRY_ISSUES_URL =
   "https://github.com/getpaseo/plugins/issues/new"
 
 /** Installation id of this plugin; it cannot be stopped mid-update, so it updates detached. */
-export const SELF_INSTALLATION_ID = "paseo-market"
+export const SELF_INSTALLATION_ID = "paseo-plugin-management"
 
 /**
  * The registry decides what the `paseo` CLI installs on the daemon host, so

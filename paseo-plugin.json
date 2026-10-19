@@ -1,5 +1,5 @@
 {
-  "id": "paseo-market",
+  "id": "paseo-plugin-management",
   "name": "Plugin market",
   "description": "Multi-source Paseo plugin market: browse, install, uninstall, enable, disable, reload and update plugins",
   "media": [],

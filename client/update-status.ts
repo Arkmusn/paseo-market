@@ -7,7 +7,7 @@ import { t } from "./i18n"
  * Update status is about the daemon's installed plugins, not a registry, so
  * the key does not vary with the registry URL.
  */
-export const UPDATE_STATUS_QUERY_KEY = ["paseo-cafe-update-status"] as const
+export const UPDATE_STATUS_QUERY_KEY = ["paseo-plugin-management-update-status"] as const
 
 /** Whether any of these installations has an update the user can apply. */
 export function hasAvailableUpdate(
