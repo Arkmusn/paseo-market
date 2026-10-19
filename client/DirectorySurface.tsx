@@ -623,7 +623,7 @@ export function DirectorySurface({
   )
   const { plugins: pluginEntries, themes: themeEntries } = useMemo(
     () => splitThemes(sourceFiltered),
-    [plugins]
+    [sourceFiltered]
   )
   // Themes have their own segment, so the category strip only offers what
   // plugins use.
