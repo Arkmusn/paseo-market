@@ -1,7 +1,7 @@
 {
   "name": "paseo-plugin-management",
   "private": true,
-  "version": "0.7.1",
+  "version": "0.7.2",
   "license": "Apache-2.0",
   "description": "Multi-source Paseo plugin market",
   "scripts": {

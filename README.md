@@ -1,4 +1,4 @@
-# Plugin market
+# paseo-plugin-management
 
 [English](README.md) · [中文](README.zh-CN.md)
 
@@ -30,7 +30,7 @@ Requires Paseo 0.11.0-beta.4 or later and the `paseo` command on the daemon's pa
 
 ## Adding a market source: accepted URL forms
 
-Settings → Plugin market → Add a market source. These forms are resolved automatically (the form previews the URL that will actually be read):
+Settings → paseo-plugin-management → Add a market source. These forms are resolved automatically (the form previews the URL that will actually be read):
 
 | You type | It reads |
 | --- | --- |

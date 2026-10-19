@@ -1246,7 +1246,7 @@ export function DirectorySurface({
       ) : null}
       {settings.status === "error" || settings.status === "invalid" ? (
         <Text accessibilityRole="alert" style={styles.feedbackText}>
-          Plugin market settings need attention, so the official registry is in
+          paseo-plugin-management settings need attention, so the official registry is in
           use: {settings.error}
         </Text>
       ) : null}

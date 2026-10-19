@@ -1,4 +1,4 @@
-Plugin market for Paseo
+paseo-plugin-management for Paseo
 Copyright 2026 Arkmusn
 
 This product is a modified fork of Paseo Cafe
@@ -6,7 +6,7 @@ This product is a modified fork of Paseo Cafe
 licensed under the Apache License, Version 2.0.
 
 Modifications by Arkmusn, 2026:
-- Renamed the product from "Paseo Cafe" to "Plugin market" and changed the
+- Renamed the product from "Paseo Cafe" to "paseo-plugin-management" and changed the
   plugin id from "paseo-cafe" to "paseo-plugin-management".
 - Replaced the single-registry model with multiple market sources: the official
   Paseo registry, the Paseo Cafe directory, and user-added custom JSON sources

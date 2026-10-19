@@ -7,7 +7,7 @@ export default function contribute(client: PluginClientContext) {
   client.addAttachmentSource(directoryAttachments)
   client.addSettingsScreen({
     id: "settings",
-    title: "Plugin market",
+    title: "paseo-plugin-management",
     icon: "Settings",
     Component: DirectorySettings,
   })

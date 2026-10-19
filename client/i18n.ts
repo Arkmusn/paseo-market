@@ -92,7 +92,7 @@ const en = {
     sourceFilter: "Filter by market source",
     categories: "Plugin categories",
     browseTabs: "Browse plugins or themes",
-    loadingSettings: "Loading Plugin market settings…",
+    loadingSettings: "Loading paseo-plugin-management settings…",
     checkingUpdates: "Checking for plugin updates…",
     updateStatusUnavailable: (error: string) =>
       `Update status is unavailable: ${error}`,
@@ -146,7 +146,7 @@ const en = {
       "The `paseo` CLI on the daemon is unavailable or too old; install, uninstall, and update may fail.",
   },
   settings: {
-    section: "Plugin market",
+    section: "paseo-plugin-management",
     sources: "Market sources",
     tryAgain: "Try again",
     restoreDefaultSettings: "Restore default settings",
@@ -191,8 +191,8 @@ const en = {
       "A market source is a browsable plugin directory. Paseo registry reads <url>/index.json; Paseo Cafe reads <url>/api/plugins; Custom JSON auto-detects either shape or a bare array. The URL must use HTTPS, or HTTP on localhost. A GitHub repository page is resolved to its raw files automatically.",
   },
   detail: {
-    backToMarket: "Back to Plugin market",
-    market: "Plugin market",
+    backToMarket: "Back to paseo-plugin-management",
+    market: "paseo-plugin-management",
     readme: "README",
     loadingReadme: "Loading README…",
     readmeFailed: "Could not load the README.",
@@ -294,7 +294,7 @@ const zh: typeof en = {
     sourceFilter: "按市场源筛选",
     categories: "插件分类",
     browseTabs: "浏览插件或主题",
-    loadingSettings: "正在读取插件市场设置…",
+    loadingSettings: "正在读取 paseo-plugin-management 设置…",
     checkingUpdates: "正在检查插件更新…",
     updateStatusUnavailable: (error) => `无法获取更新状态：${error}`,
     installedCheckFailed: (error) => `无法检查已安装插件：${error}`,
@@ -336,7 +336,7 @@ const zh: typeof en = {
       "daemon 上的 `paseo` CLI 不可用或版本过旧；安装、卸载和更新可能失败。",
   },
   settings: {
-    section: "插件市场",
+    section: "paseo-plugin-management",
     sources: "市场源",
     tryAgain: "重试",
     restoreDefaultSettings: "恢复默认设置",
@@ -381,8 +381,8 @@ const zh: typeof en = {
       "市场源就是可浏览的插件目录。Paseo 注册表读取 <url>/index.json；Paseo Cafe 读取 <url>/api/plugins；自定义 JSON 会自动识别这两种形态或裸数组。地址必须是 HTTPS，或 localhost 上的 HTTP。GitHub 仓库页面会自动解析成 raw 文件地址。",
   },
   detail: {
-    backToMarket: "返回插件市场",
-    market: "插件市场",
+    backToMarket: "返回 paseo-plugin-management",
+    market: "paseo-plugin-management",
     readme: "说明文档",
     loadingReadme: "正在加载说明文档…",
     readmeFailed: "无法加载说明文档。",
@@ -406,7 +406,7 @@ const zh: typeof en = {
     updating: "更新中…",
     installing: "安装中…",
     updatingSelf:
-      "更新完成后插件市场会重启，结果会在重新加载后出现。",
+      "更新完成后 paseo-plugin-management 会重启，结果会在重新加载后出现。",
     updateBody:
       "更新会替换这台 Paseo 主机上的受信任、无沙箱插件代码。继续前请审阅源码。",
     cancel: "取消",

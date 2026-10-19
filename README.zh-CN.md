@@ -1,4 +1,4 @@
-# 插件市场
+# paseo-plugin-management
 
 [English](README.md) · [中文](README.zh-CN.md)
 
@@ -20,7 +20,7 @@
 
 ## 安装
 
-在 Paseo 的插件市场里安装本插件,或直接运行:
+在 Paseo 的「设置 → 插件」里安装本插件,或直接运行:
 
 ```
 paseo plugin add git:Arkmusn/paseo-plugin-management
@@ -30,7 +30,7 @@ paseo plugin add git:Arkmusn/paseo-plugin-management
 
 ## 添加市场源:支持的地址形式
 
-设置 → 插件市场 → 添加源。以下地址都会被自动解析(输入框下方会实时显示实际读取的地址):
+设置 → paseo-plugin-management → 添加源。以下地址都会被自动解析(输入框下方会实时显示实际读取的地址):
 
 | 你输入 | 实际读取 |
 | --- | --- |
