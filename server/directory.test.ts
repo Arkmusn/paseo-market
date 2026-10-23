@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { noUpdateMessage, parseUpdateResult, paseoArgs, resolveRemoteHost } from "./directory"
+import { noUpdateMessage, parseUpdateResult } from "./directory"
 
 function output(rows: unknown): string {
   return JSON.stringify(rows)
@@ -80,32 +80,5 @@ describe("noUpdateMessage", () => {
     expect(noUpdateMessage("example", "update")).toBeUndefined()
     expect(noUpdateMessage("example", "error")).toBeUndefined()
     expect(noUpdateMessage("example", "local")).toContain("local directory")
-  })
-})
-
-describe("remote hosts", () => {
-  it("puts --host before the command", () => {
-    expect(paseoArgs(["plugin", "ls", "--json"], "100.1.2.3:6767")).toEqual([
-      "--host",
-      "100.1.2.3:6767",
-      "plugin",
-      "ls",
-      "--json",
-    ])
-    expect(paseoArgs(["plugin", "ls", "--json"])).toEqual([
-      "plugin",
-      "ls",
-      "--json",
-    ])
-  })
-
-  it("resolves a configured host and rejects an unknown one", () => {
-    const hosts = [
-      { id: "studio", label: "Studio", endpoint: "100.1.2.3:6767" },
-    ]
-    expect(resolveRemoteHost("studio", hosts)).toBe("100.1.2.3:6767")
-    expect(() => resolveRemoteHost("gone", hosts)).toThrow(
-      'Remote host "gone" is not configured.'
-    )
   })
 })

@@ -146,12 +146,6 @@ const en = {
     fromMarket: (id: string) => `From the market: ${id}`,
     cliUnavailable:
       "The `paseo` CLI on the daemon is unavailable or too old; install, uninstall, and update may fail.",
-    thisHost: "This host",
-    readOnly: "Read-only",
-    remoteReadOnly:
-      "Install, update and removal run on the daemon this app is connected to. To change these plugins, add this host in Paseo and switch to it.",
-    remoteFailed: (message: string) => `Couldn't read this host: ${message}`,
-    hostPicker: "Inspect another host",
   },
   settings: {
     section: "paseo-plugin-management",
@@ -176,22 +170,9 @@ const en = {
     addToSources: "Add to the market sources",
     restoreBuiltins: "Restore the built-in registry and Cafe sources",
     restoreDefaults: "Restore defaults",
-    remoteHosts: "Remote hosts",
-    remoteHostsHint:
-      "Read-only. Enter the address the CLI accepts for --host: a Tailscale address such as 100.101.102.103:6767, or ssh://user@host.",
-    remoteHostLabel: "Label",
-    remoteHostLabelHint: "Shown on the installed screen. Optional.",
-    remoteHostEndpoint: "Daemon endpoint",
-    remoteHostEndpointInvalid:
-      "Use host:port, ssh://host, a socket or a pairing URL.",
-    remoteHostAdd: "Add remote host",
-    remoteHostsEmpty: "No remote hosts yet.",
-    remoteHostRemove: "Remove this host",
-    remoteHostAdded: "Remote host added.",
-    remoteHostRemoved: "Remote host removed.",
     runUpdates: "Run automatic updates now",
     runUpdatesHint:
-      "Installed plugins update on their own every 6 hours unless automatic updates are off for them.",
+      "Automatic updates are off by default. Plugins you switch on update every 6 hours.",
     running: "Running…",
     runNow: "Run now",
     sourceAdded: "Market source added.",
@@ -357,12 +338,6 @@ const zh: typeof en = {
     fromMarket: (id) => `来自市场：${id}`,
     cliUnavailable:
       "daemon 上的 `paseo` CLI 不可用或版本过旧；安装、卸载和更新可能失败。",
-    thisHost: "本机",
-    readOnly: "只读",
-    remoteReadOnly:
-      "安装、更新与卸载都在当前连接的 daemon 上执行。要修改这些插件，请在 Paseo 中添加并切换到这个 host。",
-    remoteFailed: (message: string) => `无法读取该 host：${message}`,
-    hostPicker: "查看其它 host",
   },
   settings: {
     section: "paseo-plugin-management",
@@ -387,22 +362,9 @@ const zh: typeof en = {
     addToSources: "添加到市场源",
     restoreBuiltins: "恢复内置注册表与 Cafe 源",
     restoreDefaults: "恢复默认",
-    remoteHosts: "远程 host",
-    remoteHostsHint:
-      "只读。填写 CLI 的 --host 地址：Tailscale 地址如 100.101.102.103:6767，或 ssh://user@host。",
-    remoteHostLabel: "名称",
-    remoteHostLabelHint: "显示在已装页面上，可留空。",
-    remoteHostEndpoint: "daemon 地址",
-    remoteHostEndpointInvalid:
-      "请使用 host:port、ssh://host、socket 路径或配对链接。",
-    remoteHostAdd: "添加远程 host",
-    remoteHostsEmpty: "还没有远程 host。",
-    remoteHostRemove: "移除该 host",
-    remoteHostAdded: "已添加远程 host。",
-    remoteHostRemoved: "已移除远程 host。",
     runUpdates: "立即执行自动更新",
     runUpdatesHint:
-      "除非为某个插件关闭了自动更新，否则已安装插件每 6 小时自动更新一次。",
+      "自动更新默认关闭。只有你手动打开的插件才会每 6 小时更新一次。",
     running: "执行中…",
     runNow: "立即执行",
     sourceAdded: "已添加市场源。",

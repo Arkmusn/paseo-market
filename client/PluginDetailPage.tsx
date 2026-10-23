@@ -66,7 +66,7 @@ export interface PluginDetailPageProps {
   updateError: string | null
   onInstall: () => void
   onUpdate: (installation: InstalledPlugin) => void
-  autoUpdateOptOuts: readonly string[]
+  autoUpdateOptIns: readonly string[]
   autoUpdateSaving: boolean
   onAutoUpdateChange: (installationId: string, enabled: boolean) => void
   onOpenGallery: () => void
@@ -516,7 +516,7 @@ export function PluginDetailPage({
   updateError,
   onInstall,
   onUpdate,
-  autoUpdateOptOuts,
+  autoUpdateOptIns,
   autoUpdateSaving,
   onAutoUpdateChange,
   onOpenGallery,
@@ -936,7 +936,7 @@ export function PluginDetailPage({
             </Text>
             {installations.map((installation) => {
               const update = updates.get(installation.id)
-              const optedOut = autoUpdateOptOuts.includes(installation.id)
+              const optedIn = autoUpdateOptIns.includes(installation.id)
               const source =
                 installation.kind === "npm"
                   ? installation.packageName
@@ -983,34 +983,34 @@ export function PluginDetailPage({
                       accessibilityRole="switch"
                       accessibilityLabel={`{t().detail.automaticUpdates} for ${installation.id}`}
                       accessibilityState={{
-                        checked: !optedOut,
+                        checked: optedIn,
                         disabled: switchDisabled,
                       }}
-                      aria-checked={!optedOut}
+                      aria-checked={optedIn}
                       disabled={switchDisabled}
                       style={[
                         styles.switchRow,
                         switchDisabled ? styles.buttonDisabled : null,
                       ]}
                       onPress={() =>
-                        onAutoUpdateChange(installation.id, optedOut)
+                        onAutoUpdateChange(installation.id, !optedIn)
                       }
                     >
                       <Text style={styles.switchLabel}>{t().detail.automaticUpdates}</Text>
                       <View style={styles.switchControl}>
                         <Text style={styles.switchState}>
-                          {optedOut ? "Off" : "On"}
+                          {optedIn ? "On" : "Off"}
                         </Text>
                         <View
                           style={[
                             styles.switchTrack,
-                            optedOut ? null : styles.switchTrackOn,
+                            optedIn ? styles.switchTrackOn : null,
                           ]}
                         >
                           <View
                             style={[
                               styles.switchThumb,
-                              optedOut ? null : styles.switchThumbOn,
+                              optedIn ? styles.switchThumbOn : null,
                             ]}
                           />
                         </View>

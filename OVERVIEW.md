@@ -29,10 +29,10 @@ paseo-plugin-management needs Paseo 0.11.0 or later and the `paseo` command on t
 
 ## Capabilities and limits
 
-- Automatic updates are on by default for every installed plugin, including paseo-plugin-management. The daemon checks 30 seconds after it starts and then every six hours, moves each plugin to its current directory pin, or to the latest release of the npm package or Git source it was installed from, and keeps going if one plugin fails. Turn them off for a single plugin from its detail page, or run the check immediately from paseo-plugin-management's settings.
+- Automatic updates are off by default. Switch one on from its detail page, and the daemon checks 30 seconds after it starts and then every six hours, moves that plugin to its current directory pin or to the latest release of the npm package or Git source it was installed from, and keeps going if one plugin fails. Run the check immediately from paseo-plugin-management's settings.
 - The market sidebar item shows the number of plugins with an update available.
 - The installed view lists everything you installed, with enable, disable, reload, update and uninstall actions and the state each plugin reported.
 - A composer attachment source lets you attach a plugin's listing to a prompt, so an agent can review it before you install. The listing text then becomes part of that prompt and reaches the agent provider the way your other messages do.
-- paseo-plugin-management stores your sources, your last search and filters, the list of plugins excluded from automatic updates and the plugins you disabled in its Paseo settings. It contacts only the sources you enabled; installs and updates fetch the artifact from npm or Git the way the `paseo` command normally does.
+- paseo-plugin-management stores your sources, your last search and filters, the plugins you switched automatic updates on for, and the plugins you disabled in its Paseo settings. It contacts only the sources you enabled; installs and updates fetch the artifact from npm or Git the way the `paseo` command normally does.
 - Plugins installed from npm or Git before the directory existed are recognized by package name or repository, and shown as installed when they match a listing.
 - Listed plugins are community submissions. They still run unsandboxed on your daemon host, so read a plugin's source before installing it.

@@ -5,7 +5,6 @@ import type { RpcInput, RpcOutput } from "@getpaseo/plugin"
 import { z } from "zod"
 import type {
   directoryDetailRpc,
-  directoryHostPluginsRpc,
   directoryInstallRpc,
   directoryListRpc,
   directoryReloadRpc,
@@ -32,7 +31,6 @@ import {
   type MarketSource,
   pluginUpdateSchema,
   registryBase,
-  type RemoteHost,
   SELF_INSTALLATION_ID,
   SITE_URL,
   sameArtifact,
@@ -113,23 +111,12 @@ export function buildPaseoInvocation(
   }
 }
 
-/**
- * `--host` is a global option, so it has to precede the command.
- */
-export function paseoArgs(
-  args: readonly string[],
-  host?: string
-): string[] {
-  return host ? ["--host", host, ...args] : [...args]
-}
-
 export async function execPaseo(
   args: readonly string[],
   timeout: number,
-  signal?: AbortSignal,
-  host?: string
+  signal?: AbortSignal
 ) {
-  const invocation = buildPaseoInvocation(paseoArgs(args, host))
+  const invocation = buildPaseoInvocation(args)
   return execFileAsync(invocation.executable, invocation.args, {
     timeout,
     signal,
@@ -191,33 +178,6 @@ function commandFailureMessage(error: unknown): string {
   return message.length > MAX_COMMAND_OUTPUT_LENGTH
     ? `${message.slice(0, MAX_COMMAND_OUTPUT_LENGTH)}\n\n[Output truncated by paseo-plugin-management]`
     : message
-}
-
-/**
- * The CLI reports failures as JSON on stderr; show its message instead of the
- * whole document, which is what a remote host surfaces when it is unreachable.
- */
-function cliFailureMessage(error: unknown): string {
-  const stderr = (error as { stderr?: unknown }).stderr
-  if (typeof stderr === "string") {
-    try {
-      const parsed = z
-        .object({
-          error: z.object({
-            message: z.string(),
-            details: z.string().optional(),
-          }),
-        })
-        .safeParse(JSON.parse(stderr))
-      if (parsed.success) {
-        const { message, details } = parsed.data.error
-        return details ? `${message} ${details}` : message
-      }
-    } catch {
-      // Not JSON; fall through to the generic reader.
-    }
-  }
-  return commandFailureMessage(error)
 }
 
 // ---------------------------------------------------------------------------
@@ -882,13 +842,8 @@ export function normalizeInstalledPlugin(value: unknown): InstalledPlugin {
   })
 }
 
-async function listInstalledPlugins(host?: string): Promise<InstalledPlugin[]> {
-  const { stdout } = await execPaseo(
-    ["plugin", "ls", "--json"],
-    host ? 60_000 : 30_000,
-    undefined,
-    host
-  )
+async function listInstalledPlugins(): Promise<InstalledPlugin[]> {
+  const { stdout } = await execPaseo(["plugin", "ls", "--json"], 30_000)
   return z
     .array(z.unknown())
     .max(500)
@@ -932,23 +887,14 @@ let updateStatusCache:
   | { expiresAt: number; value: Promise<PluginUpdate[]> }
   | undefined
 
-function fetchUpdateStatus(
-  force = false,
-  host?: string
-): Promise<PluginUpdate[]> {
-  // A remote host is inspected on demand: the cache belongs to this daemon.
-  if (!host) {
-    if (!force && updateStatusCache && updateStatusCache.expiresAt > Date.now()) {
-      return updateStatusCache.value
-    }
+function fetchUpdateStatus(force = false): Promise<PluginUpdate[]> {
+  if (!force && updateStatusCache && updateStatusCache.expiresAt > Date.now()) {
+    return updateStatusCache.value
   }
   const value = execPaseo(
     ["plugin", "update", "--all", "--check", "--json"],
-    host ? 90_000 : 60_000,
-    undefined,
-    host
+    60_000
   ).then(({ stdout }) => parseUpdatePreview(stdout))
-  if (host) return value
   const entry = { expiresAt: Date.now() + UPDATE_STATUS_TTL_MS, value }
   updateStatusCache = entry
   value.catch(() => {
@@ -1008,39 +954,9 @@ export async function getDirectoryDetail(
 }
 
 export async function listDirectoryUpdateStatus(
-  input: RpcInput<typeof directoryUpdateStatusRpc>,
-  hosts: readonly RemoteHost[] = []
+  input: RpcInput<typeof directoryUpdateStatusRpc>
 ): Promise<RpcOutput<typeof directoryUpdateStatusRpc>> {
-  const host = input.hostId ? resolveRemoteHost(input.hostId, hosts) : undefined
-  return { updates: await fetchUpdateStatus(input.force, host) }
-}
-
-/** The `--host` value for a configured remote daemon. */
-export function resolveRemoteHost(
-  hostId: string,
-  hosts: readonly RemoteHost[]
-): string {
-  const host = hosts.find((candidate) => candidate.id === hostId)
-  if (!host) {
-    throw new Error(`Remote host "${hostId}" is not configured.`)
-  }
-  return host.endpoint
-}
-
-/**
- * Read-only view of another daemon's plugins. Actions stay with the daemon this
- * app is connected to, so everything here just reads `paseo plugin ls`.
- */
-export async function listHostPlugins(
-  input: RpcInput<typeof directoryHostPluginsRpc>,
-  hosts: readonly RemoteHost[]
-): Promise<RpcOutput<typeof directoryHostPluginsRpc>> {
-  const host = resolveRemoteHost(input.hostId, hosts)
-  try {
-    return { installations: await listInstalledPlugins(host) }
-  } catch (error) {
-    return { installations: [], error: cliFailureMessage(error) }
-  }
+  return { updates: await fetchUpdateStatus(input.force) }
 }
 
 // ---------------------------------------------------------------------------
@@ -1269,7 +1185,7 @@ export async function updateDirectoryPlugin(
 }
 
 export interface AutomaticUpdateSettings {
-  autoUpdateOptOuts: readonly string[]
+  autoUpdateOptIns: readonly string[]
 }
 
 interface AutomaticUpdateDependencies {
@@ -1281,7 +1197,7 @@ let automaticUpdateRun:
   | Promise<RpcOutput<typeof directoryRunAutomaticUpdatesRpc>["outcomes"]>
   | undefined
 
-/** Applies every available update the user has not opted out of; this plugin goes last because its update ends the run. */
+/** Applies the available updates the user opted in to; this plugin goes last because its update ends the run. */
 export function runAutomaticPluginUpdates(
   readSettings: () => Promise<AutomaticUpdateSettings | undefined>,
   dependencies: AutomaticUpdateDependencies = {
@@ -1292,7 +1208,10 @@ export function runAutomaticPluginUpdates(
 ): Promise<RpcOutput<typeof directoryRunAutomaticUpdatesRpc>["outcomes"]> {
   if (automaticUpdateRun) return automaticUpdateRun
   const run = (async () => {
-    if (!(await readSettings()) || signal?.aborted) return []
+    const initial = await readSettings()
+    if (!initial || initial.autoUpdateOptIns.length === 0 || signal?.aborted) {
+      return []
+    }
     const available = (await dependencies.fetchStatus())
       .filter((update) => update.outcome === "update")
       .sort(
@@ -1307,7 +1226,7 @@ export function runAutomaticPluginUpdates(
       if (signal?.aborted) break
       // Read per update: the user may turn automatic updates off mid-run.
       const current = await readSettings()
-      if (!current || current.autoUpdateOptOuts.includes(update.id)) {
+      if (!current || !current.autoUpdateOptIns.includes(update.id)) {
         outcomes.push({
           installationId: update.id,
           status: "skipped",

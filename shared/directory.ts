@@ -337,22 +337,23 @@ export function setAutomaticUpdatePreference(
   enabled: boolean
 ): string[] {
   return enabled
-    ? current.filter((id) => id !== installationId)
-    : Array.from(new Set([...current, installationId]))
+    ? Array.from(new Set([...current, installationId]))
+    : current.filter((id) => id !== installationId)
 }
 
 /**
  * v5 retires the Cafe catalog URL, Preview opt-ins, and the pending self-update
- * record. v6 replaces the single `registryUrl` with a `sources` list. Browse
- * state and automatic-update opt-outs carry over; a non-default custom registry
- * becomes a single paseo-registry source.
+ * record. v6 replaces the single `registryUrl` with a `sources` list. v9 turns
+ * automatic updates into an opt-in list, so every earlier document starts with
+ * none. Browse state carries over; a non-default custom registry becomes a
+ * single paseo-registry source.
  */
 export function migrateDirectorySettings(
   values: unknown,
   fromVersion: number
 ): unknown {
   if (
-    fromVersion >= 8 ||
+    fromVersion >= 9 ||
     typeof values !== "object" ||
     values === null ||
     Array.isArray(values)
@@ -360,8 +361,16 @@ export function migrateDirectorySettings(
     return values
   }
   const previous = values as Record<string, unknown>
-  // v8 adds remote hosts, which start empty.
-  if (fromVersion >= 6) return { ...previous, remoteHosts: [] }
+  // The old list held opt-outs from an on-by-default schedule; nothing carries
+  // over to the opt-in list. Older keys are dropped rather than spread.
+  if (fromVersion >= 6) {
+    return {
+      sources: previous.sources,
+      browse: previous.browse,
+      language: previous.language,
+      autoUpdateOptIns: [],
+    }
+  }
   const browse =
     previous.browse &&
     typeof previous.browse === "object" &&
@@ -397,29 +406,9 @@ export function migrateDirectorySettings(
       // The pre-v5 Cafe taxonomy differed from the registry's, so reset then.
       categories: fromVersion >= 5 ? (browse.categories ?? []) : [],
     },
-    autoUpdateOptOuts: previous.autoUpdateOptOuts,
-    remoteHosts: [],
+    autoUpdateOptIns: [],
   }
 }
-
-/**
- * A daemon the CLI can reach with `--host`: `host:port`, `ssh://user@host`, a
- * socket path or a pairing URL. Only read-only inspection targets one of
- * these, so a leading dash is rejected before it can read as a flag.
- */
-export const remoteHostEndpointSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(200)
-  .regex(/^(?!-)\S+$/, "Use host:port, ssh://host, a socket or a pairing URL")
-
-export const remoteHostSchema = z.object({
-  id: z.string().regex(/^[a-z][a-z0-9-]*$/).max(64),
-  label: z.string().max(100).default(""),
-  endpoint: remoteHostEndpointSchema,
-})
-export type RemoteHost = z.infer<typeof remoteHostSchema>
 
 /** 界面语言；auto 跟随系统（无法判断时用英文）。 */
 export const MARKET_LANGUAGES = ["auto", "en", "zh"] as const
@@ -428,15 +417,14 @@ export type MarketLanguage = (typeof MARKET_LANGUAGES)[number]
 export const directorySettings = defineSettings({
   id: "directory-settings",
   scope: "host",
-  version: 8,
+  version: 9,
   schema: z.object({
     sources: z.array(marketSourceSchema).max(50).default(DEFAULT_SOURCES),
     browse: directoryBrowseSettingsSchema.default(
       DEFAULT_DIRECTORY_BROWSE_SETTINGS
     ),
-    autoUpdateOptOuts: z.array(installationIdSchema).max(500).default([]),
+    autoUpdateOptIns: z.array(installationIdSchema).max(500).default([]),
     language: z.enum(MARKET_LANGUAGES).default("auto"),
-    remoteHosts: z.array(remoteHostSchema).max(10).default([]),
   }),
   migrate: migrateDirectorySettings,
 })
@@ -501,21 +489,8 @@ export const directoryDetailRpc = defineRpc({
 export const directoryUpdateStatusRpc = defineRpc({
   name: "directory.update-status",
   // `force` skips the daemon-side cache so Refresh sees changes made outside the app.
-  input: z.object({
-    force: z.boolean().default(false),
-    /** A configured remote host; omitted or null means this daemon. */
-    hostId: z.string().max(64).nullable().optional(),
-  }),
+  input: z.object({ force: z.boolean().default(false) }),
   output: z.object({ updates: z.array(pluginUpdateSchema).max(500) }),
-})
-
-export const directoryHostPluginsRpc = defineRpc({
-  name: "directory.host-plugins",
-  input: z.object({ hostId: z.string().max(64) }),
-  output: z.object({
-    installations: z.array(installedPluginSchema).max(500),
-    error: z.string().optional(),
-  }),
 })
 
 export const directoryInstallRpc = defineRpc({

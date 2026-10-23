@@ -399,8 +399,8 @@ export function DirectorySurface({
     void saveSettings(
       {
         ...settingsValues,
-        autoUpdateOptOuts: setAutomaticUpdatePreference(
-          settingsValues.autoUpdateOptOuts,
+        autoUpdateOptIns: setAutomaticUpdatePreference(
+          settingsValues.autoUpdateOptIns,
           pending.installationId,
           pending.enabled
         ),
@@ -1012,7 +1012,7 @@ export function DirectorySurface({
         onUpdate={(installation) =>
           updateMutation.mutate({ entry: detailEntry, installation })
         }
-        autoUpdateOptOuts={settingsValues?.autoUpdateOptOuts ?? []}
+        autoUpdateOptIns={settingsValues?.autoUpdateOptIns ?? []}
         autoUpdateSaving={
           settings.status !== "ready" ||
           settingsSaving ||

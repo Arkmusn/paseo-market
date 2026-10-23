@@ -383,7 +383,7 @@ describe("canonicalSourceUrl", () => {
 })
 
 describe("settings", () => {
-  it("drops retired Cafe settings and keeps browse and opt-outs", () => {
+  it("drops retired Cafe settings and starts with automatic updates off", () => {
     const migrated = migrateDirectorySettings(
       {
         directoryUrl: "https://paseo.cafe/api/plugins",
@@ -403,9 +403,8 @@ describe("settings", () => {
 
     expect(parsed).toEqual({
       sources: DEFAULT_SOURCES,
-      autoUpdateOptOuts: ["review"],
+      autoUpdateOptIns: [],
       language: "auto",
-      remoteHosts: [],
       browse: {
         query: "theme",
         categories: [],
@@ -419,7 +418,7 @@ describe("settings", () => {
 
   it("turns a custom registry URL into a single source", () => {
     const migrated = migrateDirectorySettings(
-      { registryUrl: "https://mirror.example", autoUpdateOptOuts: [] },
+      { registryUrl: "https://mirror.example" },
       5
     )
     const parsed = directorySettings.schema.parse(migrated)
@@ -439,22 +438,22 @@ describe("settings", () => {
     const current = {
       sources: DEFAULT_SOURCES,
       browse: {},
-      autoUpdateOptOuts: [],
-      remoteHosts: [],
+      autoUpdateOptIns: [],
     }
-    expect(migrateDirectorySettings(current, 8)).toBe(current)
+    expect(migrateDirectorySettings(current, 9)).toBe(current)
   })
 
-  it("adds an empty remote host list to a v7 document", () => {
+  it("drops the v8 opt-out list and the remote host list", () => {
     const previous = {
       sources: DEFAULT_SOURCES,
       browse: {},
       autoUpdateOptOuts: [],
-      language: "zh",
+      remoteHosts: [{ id: "x", label: "", endpoint: "100.1.2.3:6767" }],
     }
-    expect(migrateDirectorySettings(previous, 7)).toEqual({
-      ...previous,
-      remoteHosts: [],
+    expect(migrateDirectorySettings(previous, 8)).toEqual({
+      sources: DEFAULT_SOURCES,
+      browse: {},
+      autoUpdateOptIns: [],
     })
   })
 
@@ -501,15 +500,15 @@ describe("settings", () => {
     )
   })
 
-  it("toggles automatic updates through the opt-out list", () => {
-    expect(setAutomaticUpdatePreference([], "review", false)).toEqual([
-      "review",
-    ])
-    expect(setAutomaticUpdatePreference(["review"], "review", false)).toEqual([
+  it("toggles automatic updates through the opt-in list", () => {
+    expect(setAutomaticUpdatePreference([], "review", true)).toEqual([
       "review",
     ])
     expect(
-      setAutomaticUpdatePreference(["review", "other"], "review", true)
+      setAutomaticUpdatePreference(["review"], "review", true)
+    ).toEqual(["review"])
+    expect(
+      setAutomaticUpdatePreference(["review", "other"], "review", false)
     ).toEqual(["other"])
   })
 })

@@ -13,7 +13,7 @@ A screen inside Paseo for managing plugins: it aggregates several plugin directo
 - **Installed plugin management**: enable (green) / disable (red), reload, update and uninstall, one row of actions per plugin.
 - **Settings in place**: a Settings button in the market header opens this plugin's own configuration (sources, language, automatic updates) without leaving the page.
 - **Reviewed install anchors**: the exact command and pinned commit are shown before installing; if the catalog's anchor moves after you confirm, the install is refused.
-- **Automatic updates**: on by default; checked 30 seconds after the daemon starts and every 6 hours after that. Opt out per plugin, or run a check immediately from settings.
+- **Automatic updates**: off by default; switch a plugin on to have it checked 30 seconds after the daemon starts and every 6 hours after that. Run a check immediately from settings.
 - **Sidebar badge**: the Plugins sidebar item shows the number of pending updates.
 - **English and Chinese interface**: switch between Automatic, English and 中文 under Language in settings; listing bodies such as READMEs stay in the language the plugin provides.
 - **Attachment source**: attach a listing to a prompt so an agent can review it before you install.

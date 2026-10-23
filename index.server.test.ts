@@ -40,7 +40,7 @@ const READY = {
         enabled: true,
       },
     ],
-    autoUpdateOptOuts: [],
+    autoUpdateOptIns: [],
     browse: {},
   },
 }
@@ -118,7 +118,7 @@ describe("automatic update lifecycle", () => {
             revision: "1",
             values: {
               registryUrl: "https://registry.example.test",
-              autoUpdateOptOuts: [],
+              autoUpdateOptIns: [],
               browse: {},
             },
           }),
@@ -172,7 +172,7 @@ describe("automatic update lifecycle", () => {
               revision: "1",
               values: {
                 registryUrl: "https://registry.example.test",
-                autoUpdateOptOuts: [],
+                autoUpdateOptIns: [],
                 browse: {},
               },
             }),
