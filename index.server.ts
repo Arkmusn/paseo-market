@@ -2,6 +2,7 @@ import type { PluginServerContext } from "@getpaseo/plugin/server"
 import {
   getDirectoryDetail,
   installDirectoryPlugin,
+  listHostPlugins,
   listDirectory,
   listDirectoryUpdateStatus,
   reloadDirectoryPlugin,
@@ -14,6 +15,7 @@ import {
 import {
   DEFAULT_SOURCES,
   directoryDetailRpc,
+  directoryHostPluginsRpc,
   directoryInstallRpc,
   directoryListRpc,
   directoryReloadRpc,
@@ -25,11 +27,13 @@ import {
   directoryUpdateRpc,
   directoryUpdateStatusRpc,
   type MarketSource,
+  type RemoteHost,
 } from "./shared/directory"
 
 interface DirectorySettingsValues {
   sources: MarketSource[]
   autoUpdateOptOuts?: string[]
+  remoteHosts?: RemoteHost[]
 }
 interface DirectorySettingsReader {
   read(): Promise<
@@ -65,6 +69,8 @@ export default function contribute(
   // market still shows something; a readable empty list stays empty.
   const readSources = async (): Promise<MarketSource[]> =>
     (await readDirectorySettings(settings))?.sources ?? DEFAULT_SOURCES
+  const readRemoteHosts = async (): Promise<RemoteHost[]> =>
+    (await readDirectorySettings(settings))?.remoteHosts ?? []
   let disposed = false
   const automaticUpdateAbort = new AbortController()
 
@@ -93,8 +99,11 @@ export default function contribute(
   server.handle(directoryDetailRpc, async (input) =>
     getDirectoryDetail(input, await readSources())
   )
-  server.handle(directoryUpdateStatusRpc, (input) =>
-    listDirectoryUpdateStatus(input)
+  server.handle(directoryUpdateStatusRpc, async (input) =>
+    listDirectoryUpdateStatus(input, await readRemoteHosts())
+  )
+  server.handle(directoryHostPluginsRpc, async (input) =>
+    listHostPlugins(input, await readRemoteHosts())
   )
   server.handle(directoryRunAutomaticUpdatesRpc, async () => ({
     outcomes: await runAutomaticUpdates(),

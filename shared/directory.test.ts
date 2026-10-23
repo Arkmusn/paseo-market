@@ -405,6 +405,7 @@ describe("settings", () => {
       sources: DEFAULT_SOURCES,
       autoUpdateOptOuts: ["review"],
       language: "auto",
+      remoteHosts: [],
       browse: {
         query: "theme",
         categories: [],
@@ -439,8 +440,22 @@ describe("settings", () => {
       sources: DEFAULT_SOURCES,
       browse: {},
       autoUpdateOptOuts: [],
+      remoteHosts: [],
     }
-    expect(migrateDirectorySettings(current, 6)).toBe(current)
+    expect(migrateDirectorySettings(current, 8)).toBe(current)
+  })
+
+  it("adds an empty remote host list to a v7 document", () => {
+    const previous = {
+      sources: DEFAULT_SOURCES,
+      browse: {},
+      autoUpdateOptOuts: [],
+      language: "zh",
+    }
+    expect(migrateDirectorySettings(previous, 7)).toEqual({
+      ...previous,
+      remoteHosts: [],
+    })
   })
 
   it("falls back on unknown browse values instead of invalidating the document", () => {

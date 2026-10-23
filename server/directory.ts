@@ -5,6 +5,7 @@ import type { RpcInput, RpcOutput } from "@getpaseo/plugin"
 import { z } from "zod"
 import type {
   directoryDetailRpc,
+  directoryHostPluginsRpc,
   directoryInstallRpc,
   directoryListRpc,
   directoryReloadRpc,
@@ -31,6 +32,7 @@ import {
   type MarketSource,
   pluginUpdateSchema,
   registryBase,
+  type RemoteHost,
   SELF_INSTALLATION_ID,
   SITE_URL,
   sameArtifact,
@@ -111,12 +113,23 @@ export function buildPaseoInvocation(
   }
 }
 
+/**
+ * `--host` is a global option, so it has to precede the command.
+ */
+export function paseoArgs(
+  args: readonly string[],
+  host?: string
+): string[] {
+  return host ? ["--host", host, ...args] : [...args]
+}
+
 export async function execPaseo(
   args: readonly string[],
   timeout: number,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  host?: string
 ) {
-  const invocation = buildPaseoInvocation(args)
+  const invocation = buildPaseoInvocation(paseoArgs(args, host))
   return execFileAsync(invocation.executable, invocation.args, {
     timeout,
     signal,
@@ -178,6 +191,33 @@ function commandFailureMessage(error: unknown): string {
   return message.length > MAX_COMMAND_OUTPUT_LENGTH
     ? `${message.slice(0, MAX_COMMAND_OUTPUT_LENGTH)}\n\n[Output truncated by paseo-plugin-management]`
     : message
+}
+
+/**
+ * The CLI reports failures as JSON on stderr; show its message instead of the
+ * whole document, which is what a remote host surfaces when it is unreachable.
+ */
+function cliFailureMessage(error: unknown): string {
+  const stderr = (error as { stderr?: unknown }).stderr
+  if (typeof stderr === "string") {
+    try {
+      const parsed = z
+        .object({
+          error: z.object({
+            message: z.string(),
+            details: z.string().optional(),
+          }),
+        })
+        .safeParse(JSON.parse(stderr))
+      if (parsed.success) {
+        const { message, details } = parsed.data.error
+        return details ? `${message} ${details}` : message
+      }
+    } catch {
+      // Not JSON; fall through to the generic reader.
+    }
+  }
+  return commandFailureMessage(error)
 }
 
 // ---------------------------------------------------------------------------
@@ -842,8 +882,13 @@ export function normalizeInstalledPlugin(value: unknown): InstalledPlugin {
   })
 }
 
-async function listInstalledPlugins(): Promise<InstalledPlugin[]> {
-  const { stdout } = await execPaseo(["plugin", "ls", "--json"], 30_000)
+async function listInstalledPlugins(host?: string): Promise<InstalledPlugin[]> {
+  const { stdout } = await execPaseo(
+    ["plugin", "ls", "--json"],
+    host ? 60_000 : 30_000,
+    undefined,
+    host
+  )
   return z
     .array(z.unknown())
     .max(500)
@@ -887,14 +932,23 @@ let updateStatusCache:
   | { expiresAt: number; value: Promise<PluginUpdate[]> }
   | undefined
 
-function fetchUpdateStatus(force = false): Promise<PluginUpdate[]> {
-  if (!force && updateStatusCache && updateStatusCache.expiresAt > Date.now()) {
-    return updateStatusCache.value
+function fetchUpdateStatus(
+  force = false,
+  host?: string
+): Promise<PluginUpdate[]> {
+  // A remote host is inspected on demand: the cache belongs to this daemon.
+  if (!host) {
+    if (!force && updateStatusCache && updateStatusCache.expiresAt > Date.now()) {
+      return updateStatusCache.value
+    }
   }
   const value = execPaseo(
     ["plugin", "update", "--all", "--check", "--json"],
-    60_000
+    host ? 90_000 : 60_000,
+    undefined,
+    host
   ).then(({ stdout }) => parseUpdatePreview(stdout))
+  if (host) return value
   const entry = { expiresAt: Date.now() + UPDATE_STATUS_TTL_MS, value }
   updateStatusCache = entry
   value.catch(() => {
@@ -954,9 +1008,39 @@ export async function getDirectoryDetail(
 }
 
 export async function listDirectoryUpdateStatus(
-  input: RpcInput<typeof directoryUpdateStatusRpc>
+  input: RpcInput<typeof directoryUpdateStatusRpc>,
+  hosts: readonly RemoteHost[] = []
 ): Promise<RpcOutput<typeof directoryUpdateStatusRpc>> {
-  return { updates: await fetchUpdateStatus(input.force) }
+  const host = input.hostId ? resolveRemoteHost(input.hostId, hosts) : undefined
+  return { updates: await fetchUpdateStatus(input.force, host) }
+}
+
+/** The `--host` value for a configured remote daemon. */
+export function resolveRemoteHost(
+  hostId: string,
+  hosts: readonly RemoteHost[]
+): string {
+  const host = hosts.find((candidate) => candidate.id === hostId)
+  if (!host) {
+    throw new Error(`Remote host "${hostId}" is not configured.`)
+  }
+  return host.endpoint
+}
+
+/**
+ * Read-only view of another daemon's plugins. Actions stay with the daemon this
+ * app is connected to, so everything here just reads `paseo plugin ls`.
+ */
+export async function listHostPlugins(
+  input: RpcInput<typeof directoryHostPluginsRpc>,
+  hosts: readonly RemoteHost[]
+): Promise<RpcOutput<typeof directoryHostPluginsRpc>> {
+  const host = resolveRemoteHost(input.hostId, hosts)
+  try {
+    return { installations: await listInstalledPlugins(host) }
+  } catch (error) {
+    return { installations: [], error: cliFailureMessage(error) }
+  }
 }
 
 // ---------------------------------------------------------------------------

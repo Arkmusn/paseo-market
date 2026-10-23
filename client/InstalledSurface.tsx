@@ -1,26 +1,31 @@
 import type { PluginSurfaceProps } from "@getpaseo/plugin/client"
 import type { PluginTheme } from "@getpaseo/plugin"
-import { useRpc } from "@getpaseo/plugin/client"
+import { useRpc, useSettings } from "@getpaseo/plugin/client"
 import { FlatList, useToast } from "@getpaseo/plugin/client/react-native"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Pressable, Text, View } from "react-native"
 import {
   countAvailableUpdates,
+  directoryHostPluginsRpc,
   directoryListRpc,
   directoryReloadRpc,
   directorySetEnabledRpc,
   directoryUninstallRpc,
+  directorySettings,
   directoryUpdateRpc,
   directoryUpdateStatusRpc,
   type InstalledPlugin,
   type PluginUpdate,
+  type RemoteHost,
 } from "../shared/directory"
 import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
 import { radius, space } from "./visual"
 
 const INSTALLED_QUERY_KEY = "paseo-plugin-management-installed"
+const HOST_PLUGINS_QUERY_KEY = "paseo-plugin-management-host-plugins"
+const NO_HOSTS: readonly RemoteHost[] = []
 
 function statusLabel(status: InstalledPlugin["status"]): string {
   if (status === "running") return t().installed.running
@@ -55,6 +60,43 @@ function StatusPill({
     >
       <Text style={{ color, fontSize: 11 }}>{label}</Text>
     </View>
+  )
+}
+
+function HostChip({
+  label,
+  selected,
+  theme,
+  onPress,
+}: {
+  label: string
+  selected: boolean
+  theme: PluginTheme
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={{
+        borderColor: selected ? theme.colors.accent : theme.colors.border,
+        borderWidth: 1,
+        borderRadius: radius.sm,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: selected ? theme.colors.surface2 : theme.colors.surface1,
+      }}
+    >
+      <Text
+        style={{
+          color: selected ? theme.colors.accent : theme.colors.foreground,
+          fontSize: 12,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   )
 }
 
@@ -110,7 +152,9 @@ export function InstalledSurface({
   onShowMarket?: () => void
 }) {
   useMarketLocale()
+  const settings = useSettings(directorySettings)
   const listDirectory = useRpc(directoryListRpc)
+  const listHostPlugins = useRpc(directoryHostPluginsRpc)
   const listUpdateStatus = useRpc(directoryUpdateStatusRpc)
   const uninstall = useRpc(directoryUninstallRpc)
   const setEnabled = useRpc(directorySetEnabledRpc)
@@ -119,7 +163,16 @@ export function InstalledSurface({
   const toast = useToast()
   const queryClient = useQueryClient()
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [hostId, setHostId] = useState<string | null>(null)
+  const hosts: readonly RemoteHost[] =
+    settings.status === "ready" ? settings.values.remoteHosts : NO_HOSTS
 
+  // A removed host must not leave the screen on a dead selection.
+  useEffect(() => {
+    if (hostId && !hosts.some((host) => host.id === hostId)) setHostId(null)
+  }, [hostId, hosts])
+
+  const selectedHost = hosts.find((host) => host.id === hostId)
   const installedQuery = useQuery({
     queryKey: [INSTALLED_QUERY_KEY],
     queryFn: () => listDirectory({ force: false }),
@@ -130,17 +183,39 @@ export function InstalledSurface({
     queryFn: () => listUpdateStatus({ force: true }),
     staleTime: 60_000,
   })
+  const hostPluginsQuery = useQuery({
+    queryKey: [HOST_PLUGINS_QUERY_KEY, hostId],
+    queryFn: () => listHostPlugins({ hostId: hostId as string }),
+    enabled: hostId !== null,
+    staleTime: 30_000,
+  })
+  const hostUpdateStatusQuery = useQuery({
+    queryKey: [...UPDATE_STATUS_QUERY_KEY, hostId],
+    queryFn: () => listUpdateStatus({ force: true, hostId }),
+    enabled: hostId !== null,
+    staleTime: 60_000,
+  })
 
-  const updates = new Map(
-    (updateStatusQuery.data?.updates ?? []).map((entry) => [entry.id, entry])
-  )
-  const installations = installedQuery.data?.installations ?? []
-  const updateCount = countAvailableUpdates(updateStatusQuery.data?.updates ?? [])
+  const readOnly = selectedHost !== undefined
+  const activeUpdates = readOnly
+    ? (hostUpdateStatusQuery.data?.updates ?? [])
+    : (updateStatusQuery.data?.updates ?? [])
+  const updates = new Map(activeUpdates.map((entry) => [entry.id, entry]))
+  const installations = readOnly
+    ? (hostPluginsQuery.data?.installations ?? [])
+    : (installedQuery.data?.installations ?? [])
+  const updateCount = countAvailableUpdates(activeUpdates)
+  const reading = readOnly ? hostPluginsQuery.isLoading : installedQuery.isLoading
+  const remoteError = readOnly
+    ? hostPluginsQuery.data?.error ??
+      (hostPluginsQuery.isError ? String(hostPluginsQuery.error) : undefined)
+    : undefined
 
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: [INSTALLED_QUERY_KEY] }),
       queryClient.invalidateQueries({ queryKey: UPDATE_STATUS_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: [HOST_PLUGINS_QUERY_KEY] }),
     ])
   }
 
@@ -202,6 +277,46 @@ export function InstalledSurface({
                 {updateCount > 0 ? t().installed.updatesAvailable(updateCount) : ""}
               </Text>
             </View>
+            {hosts.length > 0 ? (
+              <View
+                accessibilityLabel={t().installed.hostPicker}
+                style={{ flexDirection: "row", gap: space.sm, flexWrap: "wrap" }}
+              >
+                <HostChip
+                  label={t().installed.thisHost}
+                  selected={!readOnly}
+                  theme={theme}
+                  onPress={() => setHostId(null)}
+                />
+                {hosts.map((host) => (
+                  <HostChip
+                    key={host.id}
+                    label={host.label || host.endpoint}
+                    selected={host.id === hostId}
+                    theme={theme}
+                    onPress={() => setHostId(host.id)}
+                  />
+                ))}
+              </View>
+            ) : null}
+            {readOnly && selectedHost ? (
+              <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
+                {t().installed.readOnly} · {selectedHost.endpoint}
+              </Text>
+            ) : null}
+            {readOnly ? (
+              <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
+                {t().installed.remoteReadOnly}
+              </Text>
+            ) : null}
+            {remoteError ? (
+              <Text
+                accessibilityRole="alert"
+                style={{ color: theme.colors.statusDanger, fontSize: 12 }}
+              >
+                {t().installed.remoteFailed(remoteError)}
+              </Text>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
@@ -212,11 +327,13 @@ export function InstalledSurface({
               padding: space.lg,
             }}
           >
-            {installedQuery.isLoading
+            {reading
               ? t().installed.reading
-              : installedQuery.isError
-                ? t().installed.readFailed
-                : t().installed.empty}
+              : readOnly
+                ? t().installed.empty
+                : installedQuery.isError
+                  ? t().installed.readFailed
+                  : t().installed.empty}
           </Text>
         }
         renderItem={({ item }) => (
@@ -224,6 +341,7 @@ export function InstalledSurface({
             item={item}
             update={updates.get(item.id)}
             theme={theme}
+            readOnly={readOnly}
             busy={busyId === item.id}
             onToggle={() =>
               void run(item.id, () =>
@@ -250,6 +368,7 @@ function InstalledRow({
   item,
   update,
   theme,
+  readOnly,
   busy,
   onToggle,
   onReload,
@@ -259,6 +378,7 @@ function InstalledRow({
   item: InstalledPlugin
   update?: PluginUpdate
   theme: PluginTheme
+  readOnly: boolean
   busy: boolean
   onToggle: () => void
   onReload: () => void
@@ -303,6 +423,7 @@ function InstalledRow({
           </Text>
         ) : null}
       </View>
+      {readOnly ? null : (
       <View style={{ flexDirection: "row", gap: space.sm, flexWrap: "wrap" }}>
         <Action
           label={item.enabled ? t().common.disable : t().common.enable}
@@ -321,6 +442,7 @@ function InstalledRow({
         />
         <Action label={t().common.uninstall} theme={theme} tone="danger" onPress={onUninstall} disabled={busy} />
       </View>
+      )}
     </View>
   )
 }

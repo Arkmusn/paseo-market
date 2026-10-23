@@ -17,6 +17,8 @@ import {
   directorySettings,
   isTrustedRegistryUrl,
   type MarketSource,
+  type RemoteHost,
+  remoteHostEndpointSchema,
   MARKET_LANGUAGES,
   registryBase,
   SOURCE_KIND_LABELS,
@@ -191,6 +193,8 @@ export function DirectorySettings({
     : ""
   const [busy, setBusy] = useState(false)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
+  const [draftHostLabel, setDraftHostLabel] = useState("")
+  const [draftHostEndpoint, setDraftHostEndpoint] = useState("")
 
   const sources = useMemo(
     () => (settings.status === "ready" ? settings.values.sources : []),
@@ -235,6 +239,43 @@ export function DirectorySettings({
       return ok
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function persistHosts(next: RemoteHost[]): Promise<boolean> {
+    setBusy(true)
+    try {
+      const ok = await save({ ...values, remoteHosts: next }, revision)
+      if (!ok) toast.error(t().settings.saveFailed)
+      return ok
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function addRemoteHost() {
+    const endpoint = draftHostEndpoint.trim()
+    const parsed = remoteHostEndpointSchema.safeParse(endpoint)
+    if (!parsed.success) {
+      toast.error(t().settings.remoteHostEndpointInvalid)
+      return
+    }
+    const baseId = slugify(draftHostLabel || endpoint) || "host"
+    const used = new Set(values.remoteHosts.map((host) => host.id))
+    let id = baseId
+    let suffix = 2
+    while (used.has(id)) {
+      id = `${baseId}-${suffix}`
+      suffix += 1
+    }
+    const next: RemoteHost[] = [
+      ...values.remoteHosts,
+      { id, label: draftHostLabel.trim(), endpoint: parsed.data },
+    ]
+    if (await persistHosts(next)) {
+      setDraftHostLabel("")
+      setDraftHostEndpoint("")
+      toast.show(t().settings.remoteHostAdded, { variant: "success" })
     }
   }
 
@@ -354,6 +395,66 @@ export function DirectorySettings({
           />
         </SettingsCard>
       ))}
+
+      <SettingsSection title={t().settings.remoteHosts}>
+        <SettingsCard>
+          <SettingsRow
+            label={t().settings.remoteHosts}
+            hint={t().settings.remoteHostsHint}
+          />
+          {values.remoteHosts.length === 0 ? (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <Text style={{ color: theme.colors.foregroundMuted, fontSize: 12 }}>
+                {t().settings.remoteHostsEmpty}
+              </Text>
+            </View>
+          ) : null}
+        </SettingsCard>
+        {values.remoteHosts.map((host) => (
+          <SettingsCard key={host.id}>
+            <SettingsRow
+              label={host.label || host.endpoint}
+              hint={`${t().installed.readOnly} · ${host.endpoint}`}
+            />
+            <SettingsAction
+              label={t().settings.remoteHostRemove}
+              actionLabel={t().common.remove}
+              disabled={disabled}
+              onPress={() =>
+                void persistHosts(
+                  values.remoteHosts.filter((item) => item.id !== host.id)
+                ).then((ok) => {
+                  if (ok) toast.show(t().settings.remoteHostRemoved, { variant: "success" })
+                })
+              }
+            />
+          </SettingsCard>
+        ))}
+        <SettingsCard>
+          <SettingsInput
+            label={t().settings.remoteHostLabel}
+            hint={t().settings.remoteHostLabelHint}
+            initialValue=""
+            placeholder="Studio mini"
+            onChangeText={setDraftHostLabel}
+            disabled={disabled}
+          />
+          <SettingsInput
+            label={t().settings.remoteHostEndpoint}
+            hint={t().settings.remoteHostEndpointInvalid}
+            initialValue=""
+            placeholder="100.101.102.103:6767"
+            onChangeText={setDraftHostEndpoint}
+            disabled={disabled}
+          />
+          <SettingsAction
+            label={t().settings.remoteHostAdd}
+            actionLabel={busy || saving ? t().common.adding : t().common.add}
+            disabled={disabled}
+            onPress={() => void addRemoteHost()}
+          />
+        </SettingsCard>
+      </SettingsSection>
 
       <SettingsSection title={t().settings.addSource}>
         <SettingsCard>
