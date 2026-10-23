@@ -3,8 +3,8 @@
   "name": "paseo-plugin-management",
   "description": "Browse, install and manage plugins from several Paseo directories in one screen.",
   "media": [
-    "assets/market.png",
-    "assets/installed.png"
+    "assets/installed.png",
+    "assets/market.png"
   ],
   "requirements": {
     "paseo": ">=0.11.0"
