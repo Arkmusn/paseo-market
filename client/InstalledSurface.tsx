@@ -91,6 +91,9 @@ function AutoUpdateSwitch({
         opacity: disabled ? 0.5 : 1,
       }}
     >
+      <Text style={{ color: theme.colors.foreground, fontSize: 12 }}>
+        {t().installed.autoUpdate}
+      </Text>
       <Text style={{ color: mutedOnTag, fontSize: 12 }}>
         {enabled ? t().installed.autoUpdateOn : t().installed.autoUpdateOff}
       </Text>
