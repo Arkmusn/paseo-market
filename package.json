@@ -1,7 +1,7 @@
 {
   "name": "paseo-plugin-management",
   "private": true,
-  "version": "0.10.4",
+  "version": "0.11.0",
   "license": "Apache-2.0",
   "description": "Browse, install and manage plugins from several Paseo directories in one screen.",
   "scripts": {
@@ -26,6 +26,7 @@
   "files": [
     "paseo-plugin.json",
     "OVERVIEW.md",
+    "OVERVIEW.zh-CN.md",
     "README.md",
     "LICENSE",
     "NOTICE",

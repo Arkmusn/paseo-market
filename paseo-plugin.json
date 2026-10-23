@@ -9,5 +9,11 @@
   "requirements": {
     "paseo": ">=0.11.0"
   },
-  "icon": "assets/icon.png"
+  "icon": "assets/icon.png",
+  "translations": {
+    "zh-CN": {
+      "name": "插件管理",
+      "description": "在一个界面里浏览、安装和管理来自多个 Paseo 目录的插件。"
+    }
+  }
 }
