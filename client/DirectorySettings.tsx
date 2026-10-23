@@ -12,6 +12,8 @@ import {
 import { useMemo, useState } from "react"
 import { Pressable, Text, View } from "react-native"
 import {
+  AUTO_UPDATE_INTERVAL,
+  clampIntervalMinutes,
   DEFAULT_SOURCES,
   directoryRunAutomaticUpdatesRpc,
   directorySettings,
@@ -191,6 +193,7 @@ export function DirectorySettings({
     : ""
   const [busy, setBusy] = useState(false)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
+  const [intervalDraft, setIntervalDraft] = useState<string | null>(null)
 
   const sources = useMemo(
     () => (settings.status === "ready" ? settings.values.sources : []),
@@ -266,6 +269,19 @@ export function DirectorySettings({
       setDraftName("")
       setDraftUrl("")
       toast.show(t().settings.sourceAdded, { variant: "success" })
+    }
+  }
+
+  async function saveInterval(minutes: number) {
+    setBusy(true)
+    try {
+      const ok = await save(
+        { ...values, autoUpdateIntervalMinutes: clampIntervalMinutes(minutes) },
+        revision
+      )
+      if (!ok) toast.error(t().settings.saveFailed)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -402,6 +418,38 @@ export function DirectorySettings({
           actionLabel={t().settings.restoreDefaults}
           disabled={disabled}
           onPress={() => void persist(DEFAULT_SOURCES)}
+        />
+        <SettingsInput
+          label={t().settings.interval}
+          hint={t().settings.intervalHint}
+          initialValue={`${values.autoUpdateIntervalMinutes}`}
+          placeholder={`${AUTO_UPDATE_INTERVAL.default}`}
+          onChangeText={(text) => setIntervalDraft(text)}
+          disabled={disabled}
+        />
+        <SettingsAction
+          label={`${t().settings.interval}: ${values.autoUpdateIntervalMinutes} ${t().settings.intervalUnit}`}
+          actionLabel={t().common.save}
+          disabled={disabled}
+          onPress={() => {
+            const minutes = Number(
+              intervalDraft ?? values.autoUpdateIntervalMinutes
+            )
+            if (
+              !Number.isInteger(minutes) ||
+              minutes < AUTO_UPDATE_INTERVAL.min ||
+              minutes > AUTO_UPDATE_INTERVAL.max
+            ) {
+              toast.error(
+                t().settings.intervalInvalid(
+                  AUTO_UPDATE_INTERVAL.min,
+                  AUTO_UPDATE_INTERVAL.max
+                )
+              )
+              return
+            }
+            void saveInterval(minutes)
+          }}
         />
         <SettingsAction
           label={t().settings.runUpdates}

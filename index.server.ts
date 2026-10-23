@@ -12,6 +12,7 @@ import {
   updateDirectoryPlugin,
 } from "./server/directory"
 import {
+  clampIntervalMinutes,
   DEFAULT_SOURCES,
   directoryDetailRpc,
   directoryInstallRpc,
@@ -30,6 +31,7 @@ import {
 interface DirectorySettingsValues {
   sources: MarketSource[]
   autoUpdateOptIns?: string[]
+  autoUpdateIntervalMinutes?: number
 }
 interface DirectorySettingsReader {
   read(): Promise<
@@ -74,6 +76,10 @@ export default function contribute(
     if (!current || disposed) return undefined
     return { autoUpdateOptIns: current.autoUpdateOptIns ?? [] }
   }
+  const readIntervalMinutes = async (): Promise<number> => {
+    const current = await readDirectorySettings(settings)
+    return clampIntervalMinutes(current?.autoUpdateIntervalMinutes ?? 720)
+  }
   const runAutomaticUpdates = () =>
     dependencies.run(
       readAutomaticUpdateSettings,
@@ -84,8 +90,25 @@ export default function contribute(
   const runScheduledAutomaticUpdates = () => {
     void runAutomaticUpdates().catch(() => undefined)
   }
+  // The interval is a setting, so it is re-armed whenever the user changes it.
+  let interval: ReturnType<typeof setInterval> | undefined
+  let intervalMs = 0
+  const armInterval = (minutes: number) => {
+    const next = clampIntervalMinutes(minutes) * 60_000
+    if (interval && next === intervalMs) return
+    if (interval) clearInterval(interval)
+    intervalMs = next
+    interval = setInterval(runScheduledAutomaticUpdates, next)
+  }
+  void readIntervalMinutes().then((minutes) => {
+    if (!disposed) armInterval(minutes)
+  })
+  const unsubscribe = settings.subscribe?.((state) => {
+    if (state.status === "ready") {
+      armInterval(state.values.autoUpdateIntervalMinutes)
+    }
+  })
   const startup = setTimeout(runScheduledAutomaticUpdates, 30_000)
-  const interval = setInterval(runScheduledAutomaticUpdates, 6 * 60 * 60_000)
 
   server.handle(directoryListRpc, async (input) =>
     listDirectory(input, await readSources())
@@ -117,6 +140,7 @@ export default function contribute(
     disposed = true
     automaticUpdateAbort.abort()
     clearTimeout(startup)
-    clearInterval(interval)
+    if (interval) clearInterval(interval)
+    unsubscribe?.()
   }
 }

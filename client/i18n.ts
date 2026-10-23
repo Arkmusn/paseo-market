@@ -45,6 +45,7 @@ const en = {
     remove: "Remove",
     add: "Add",
     adding: "Adding…",
+    save: "Save",
     reload: "Reload",
     enable: "Enable",
     disable: "Disable",
@@ -146,6 +147,10 @@ const en = {
     fromMarket: (id: string) => `From the market: ${id}`,
     cliUnavailable:
       "The `paseo` CLI on the daemon is unavailable or too old; install, uninstall, and update may fail.",
+    autoUpdate: "Automatic updates",
+    autoUpdateOn: "On",
+    autoUpdateOff: "Off",
+    autoUpdateUnsupported: "Local directory installs are never updated automatically.",
   },
   settings: {
     section: "paseo-plugin-management",
@@ -172,7 +177,13 @@ const en = {
     restoreDefaults: "Restore defaults",
     runUpdates: "Run automatic updates now",
     runUpdatesHint:
-      "Automatic updates are off by default. Plugins you switch on update every 6 hours.",
+      "Automatic updates are off by default. Plugins you switch on are checked on the interval below.",
+    interval: "Check interval",
+    intervalHint:
+      "How often the scheduled run checks. Minutes, 15 to 10080 (one week).",
+    intervalUnit: "minutes",
+    intervalInvalid: (min: number, max: number) =>
+      `Use a whole number of minutes from ${min} to ${max}.`,
     running: "Running…",
     runNow: "Run now",
     sourceAdded: "Market source added.",
@@ -251,6 +262,7 @@ const zh: typeof en = {
     remove: "移除",
     add: "添加",
     adding: "添加中…",
+    save: "保存",
     reload: "重载",
     enable: "启用",
     disable: "禁用",
@@ -338,6 +350,10 @@ const zh: typeof en = {
     fromMarket: (id) => `来自市场：${id}`,
     cliUnavailable:
       "daemon 上的 `paseo` CLI 不可用或版本过旧；安装、卸载和更新可能失败。",
+    autoUpdate: "自动更新",
+    autoUpdateOn: "开启",
+    autoUpdateOff: "关闭",
+    autoUpdateUnsupported: "本地目录安装的插件不会自动更新。",
   },
   settings: {
     section: "paseo-plugin-management",
@@ -364,7 +380,12 @@ const zh: typeof en = {
     restoreDefaults: "恢复默认",
     runUpdates: "立即执行自动更新",
     runUpdatesHint:
-      "自动更新默认关闭。只有你手动打开的插件才会每 6 小时更新一次。",
+      "自动更新默认关闭。你打开的插件会按下方的间隔检查。",
+    interval: "检查间隔",
+    intervalHint: "定时任务多久执行一次。单位分钟，15 到 10080（一周）。",
+    intervalUnit: "分钟",
+    intervalInvalid: (min: number, max: number) =>
+      `请填写 ${min} 到 ${max} 之间的整数分钟。`,
     running: "执行中…",
     runNow: "立即执行",
     sourceAdded: "已添加市场源。",

@@ -1,9 +1,9 @@
 import type { PluginSurfaceProps } from "@getpaseo/plugin/client"
 import type { PluginTheme } from "@getpaseo/plugin"
-import { useRpc } from "@getpaseo/plugin/client"
+import { useRpc, useSettings } from "@getpaseo/plugin/client"
 import { FlatList, useToast } from "@getpaseo/plugin/client/react-native"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Pressable, Text, View } from "react-native"
 import {
   countAvailableUpdates,
@@ -11,16 +11,20 @@ import {
   directoryReloadRpc,
   directorySetEnabledRpc,
   directoryUninstallRpc,
+  directorySettings,
   directoryUpdateRpc,
   directoryUpdateStatusRpc,
+  setAutomaticUpdatePreference,
   type InstalledPlugin,
   type PluginUpdate,
 } from "../shared/directory"
 import { t, useMarketLocale } from "./i18n"
 import { UPDATE_STATUS_QUERY_KEY } from "./update-status"
+import { mutedTextColor } from "./contrast"
 import { radius, space } from "./visual"
 
 const INSTALLED_QUERY_KEY = "paseo-plugin-management-installed"
+const NO_OPT_INS: readonly string[] = []
 
 function statusLabel(status: InstalledPlugin["status"]): string {
   if (status === "running") return t().installed.running
@@ -55,6 +59,65 @@ function StatusPill({
     >
       <Text style={{ color, fontSize: 11 }}>{label}</Text>
     </View>
+  )
+}
+
+function AutoUpdateSwitch({
+  enabled,
+  disabled,
+  theme,
+  label,
+  onPress,
+}: {
+  enabled: boolean
+  disabled: boolean
+  theme: PluginTheme
+  label: string
+  onPress: () => void
+}) {
+  const mutedOnTag = mutedTextColor(theme, theme.colors.surface2)
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: enabled, disabled }}
+      aria-checked={enabled}
+      disabled={disabled}
+      onPress={onPress}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: space.sm,
+        opacity: disabled ? 0.5 : 1,
+      }}
+    >
+      <Text style={{ color: mutedOnTag, fontSize: 12 }}>
+        {enabled ? t().installed.autoUpdateOn : t().installed.autoUpdateOff}
+      </Text>
+      <View
+        style={{
+          width: 36,
+          height: 20,
+          borderRadius: 10,
+          padding: 2,
+          borderWidth: 1,
+          borderColor: enabled ? theme.colors.accent : theme.colors.border,
+          backgroundColor: enabled ? theme.colors.accent : theme.colors.surface2,
+        }}
+      >
+        <View
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            alignSelf: enabled ? "flex-end" : "flex-start",
+            backgroundColor: enabled
+              ? theme.colors.accentForeground
+              : mutedOnTag,
+          }}
+        />
+      </View>
+    </Pressable>
   )
 }
 
@@ -110,6 +173,7 @@ export function InstalledSurface({
   onShowMarket?: () => void
 }) {
   useMarketLocale()
+  const settings = useSettings(directorySettings)
   const listDirectory = useRpc(directoryListRpc)
   const listUpdateStatus = useRpc(directoryUpdateStatusRpc)
   const uninstall = useRpc(directoryUninstallRpc)
@@ -119,6 +183,62 @@ export function InstalledSurface({
   const toast = useToast()
   const queryClient = useQueryClient()
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [pendingPreference, setPendingPreference] = useState<{
+    installationId: string
+    enabled: boolean
+    attempts: number
+  } | null>(null)
+  const [savingPreference, setSavingPreference] = useState(false)
+  const settingsValues = settings.status === "ready" ? settings.values : null
+  const optIns = settingsValues?.autoUpdateOptIns ?? NO_OPT_INS
+
+  // The preference lives in settings, so it is written once the current
+  // revision is loaded and retried once after a conflict.
+  useEffect(() => {
+    if (
+      !pendingPreference ||
+      !settingsValues ||
+      settings.status !== "ready" ||
+      savingPreference
+    ) {
+      return
+    }
+    const pending = pendingPreference
+    setSavingPreference(true)
+    void settings
+      .save(
+        {
+          ...settingsValues,
+          autoUpdateOptIns: setAutomaticUpdatePreference(
+            settingsValues.autoUpdateOptIns,
+            pending.installationId,
+            pending.enabled
+          ),
+        },
+        settings.revision
+      )
+      .then((saved) => {
+        if (saved) {
+          setPendingPreference(null)
+        } else if (pending.attempts < 1) {
+          void settings.reload().finally(() =>
+            setPendingPreference((current) =>
+              current === pending
+                ? { ...current, attempts: current.attempts + 1 }
+                : current
+            )
+          )
+        } else {
+          toast.error(t().settings.saveFailed)
+          setPendingPreference(null)
+        }
+      })
+      .catch(() => {
+        toast.error(t().settings.saveFailed)
+        setPendingPreference(null)
+      })
+      .finally(() => setSavingPreference(false))
+  }, [pendingPreference, savingPreference, settings, settingsValues, toast])
 
   const installedQuery = useQuery({
     queryKey: [INSTALLED_QUERY_KEY],
@@ -224,6 +344,16 @@ export function InstalledSurface({
             item={item}
             update={updates.get(item.id)}
             theme={theme}
+            autoUpdate={optIns.includes(item.id)}
+            autoUpdateDisabled={savingPreference || item.kind === "directory"}
+            onAutoUpdate={() => {
+              if (savingPreference) return
+              setPendingPreference({
+                installationId: item.id,
+                enabled: !optIns.includes(item.id),
+                attempts: 0,
+              })
+            }}
             busy={busyId === item.id}
             onToggle={() =>
               void run(item.id, () =>
@@ -250,6 +380,9 @@ function InstalledRow({
   item,
   update,
   theme,
+  autoUpdate,
+  autoUpdateDisabled,
+  onAutoUpdate,
   busy,
   onToggle,
   onReload,
@@ -259,6 +392,9 @@ function InstalledRow({
   item: InstalledPlugin
   update?: PluginUpdate
   theme: PluginTheme
+  autoUpdate: boolean
+  autoUpdateDisabled: boolean
+  onAutoUpdate: () => void
   busy: boolean
   onToggle: () => void
   onReload: () => void
@@ -300,6 +436,28 @@ function InstalledRow({
         {item.registryId ? (
           <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
             {t().installed.fromMarket(item.registryId)}
+          </Text>
+        ) : null}
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: space.sm,
+          flexWrap: "wrap",
+        }}
+      >
+        <AutoUpdateSwitch
+          enabled={autoUpdate}
+          disabled={autoUpdateDisabled}
+          theme={theme}
+          label={`${t().installed.autoUpdate} · ${item.id}`}
+          onPress={onAutoUpdate}
+        />
+        {item.kind === "directory" ? (
+          <Text style={{ color: theme.colors.foregroundMuted, fontSize: 11 }}>
+            {t().installed.autoUpdateUnsupported}
           </Text>
         ) : null}
       </View>

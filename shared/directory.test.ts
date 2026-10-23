@@ -21,6 +21,7 @@ import {
   registryBase,
   migrateDirectorySettings,
   sameArtifact,
+  clampIntervalMinutes,
   setAutomaticUpdatePreference,
 } from "./directory"
 
@@ -404,6 +405,7 @@ describe("settings", () => {
     expect(parsed).toEqual({
       sources: DEFAULT_SOURCES,
       autoUpdateOptIns: [],
+      autoUpdateIntervalMinutes: 720,
       language: "auto",
       browse: {
         query: "theme",
@@ -498,6 +500,14 @@ describe("settings", () => {
     expect(isDefaultDirectoryBrowseView({ ...base, status: "installed" })).toBe(
       false
     )
+  })
+
+  it("clamps an interval into the accepted range", () => {
+    expect(clampIntervalMinutes(720)).toBe(720)
+    expect(clampIntervalMinutes(1)).toBe(15)
+    expect(clampIntervalMinutes(1e9)).toBe(10_080)
+    expect(clampIntervalMinutes(90.6)).toBe(91)
+    expect(clampIntervalMinutes(Number.NaN)).toBe(720)
   })
 
   it("toggles automatic updates through the opt-in list", () => {

@@ -29,7 +29,7 @@ paseo-plugin-management needs Paseo 0.11.0 or later and the `paseo` command on t
 
 ## Capabilities and limits
 
-- Automatic updates are off by default. Switch one on from its detail page, and the daemon checks 30 seconds after it starts and then every six hours, moves that plugin to its current directory pin or to the latest release of the npm package or Git source it was installed from, and keeps going if one plugin fails. Run the check immediately from paseo-plugin-management's settings.
+- Automatic updates are off by default. Switch one on from the installed list or its detail page, and the daemon checks 30 seconds after it starts and then on the interval in paseo-plugin-management's settings, 720 minutes unless you change it. Each enabled plugin moves to its current directory pin or to the latest release of the npm package or Git source it was installed from, and one failure does not stop the rest. Plugins installed from a local directory are never updated automatically, and you can run a check immediately from settings.
 - The market sidebar item shows the number of plugins with an update available.
 - The installed view lists everything you installed, with enable, disable, reload, update and uninstall actions and the state each plugin reported.
 - A composer attachment source lets you attach a plugin's listing to a prompt, so an agent can review it before you install. The listing text then becomes part of that prompt and reaches the agent provider the way your other messages do.

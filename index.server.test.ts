@@ -107,7 +107,7 @@ describe("registry settings", () => {
 })
 
 describe("automatic update lifecycle", () => {
-  it("registers the manual RPC and clears scheduled checks on cleanup", () => {
+  it("registers the manual RPC and clears scheduled checks on cleanup", async () => {
     vi.useFakeTimers()
     try {
       const handlers = new Map<string, (input: unknown) => unknown>()
@@ -132,7 +132,52 @@ describe("automatic update lifecycle", () => {
       } as unknown as PluginServerContext)
 
       expect(handlers.has(directoryRunAutomaticUpdatesRpc.name)).toBe(true)
+      // The interval is armed once the settings read resolves.
+      await vi.advanceTimersByTimeAsync(0)
       expect(vi.getTimerCount()).toBe(2)
+      cleanup()
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("re-arms the interval when the setting changes", async () => {
+    vi.useFakeTimers()
+    try {
+      const subscribers: Array<(state: unknown) => void> = []
+      const read = async () => ({
+        status: "ready" as const,
+        revision: "1",
+        values: {
+          sources: [],
+          browse: {},
+          autoUpdateOptIns: [],
+          autoUpdateIntervalMinutes: 720,
+        },
+      })
+      const cleanup = contribute({
+        registerSettings: () => ({
+          read,
+          subscribe: (listener: (state: unknown) => void) => {
+            subscribers.push(listener)
+            return () => undefined
+          },
+        }),
+        handle: () => {},
+      } as unknown as PluginServerContext)
+
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vi.getTimerCount()).toBe(2)
+
+      // A shorter interval replaces the six-hour default.
+      subscribers[0]?.({
+        status: "ready",
+        revision: "2",
+        values: { autoUpdateIntervalMinutes: 15 },
+      })
+      expect(vi.getTimerCount()).toBe(2)
+
       cleanup()
       expect(vi.getTimerCount()).toBe(0)
     } finally {

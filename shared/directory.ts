@@ -331,6 +331,22 @@ const installationIdSchema = z
   .regex(/^[a-z][a-z0-9-]*$/)
   .max(100)
 
+/** How often the scheduled run happens, in minutes. */
+export const AUTO_UPDATE_INTERVAL = {
+  default: 720,
+  min: 15,
+  max: 10_080,
+} as const
+
+/** A stored interval is clamped into range so a bad value cannot stall updates. */
+export function clampIntervalMinutes(value: number): number {
+  if (!Number.isFinite(value)) return AUTO_UPDATE_INTERVAL.default
+  return Math.min(
+    AUTO_UPDATE_INTERVAL.max,
+    Math.max(AUTO_UPDATE_INTERVAL.min, Math.round(value))
+  )
+}
+
 export function setAutomaticUpdatePreference(
   current: readonly string[],
   installationId: string,
@@ -424,6 +440,12 @@ export const directorySettings = defineSettings({
       DEFAULT_DIRECTORY_BROWSE_SETTINGS
     ),
     autoUpdateOptIns: z.array(installationIdSchema).max(500).default([]),
+    autoUpdateIntervalMinutes: z
+      .number()
+      .int()
+      .min(AUTO_UPDATE_INTERVAL.min)
+      .max(AUTO_UPDATE_INTERVAL.max)
+      .default(AUTO_UPDATE_INTERVAL.default),
     language: z.enum(MARKET_LANGUAGES).default("auto"),
   }),
   migrate: migrateDirectorySettings,
