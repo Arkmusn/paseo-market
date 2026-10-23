@@ -182,6 +182,9 @@ const en = {
     intervalHint:
       "How often the scheduled run checks. Minutes, 15 to 10080 (one week).",
     intervalUnit: "minutes",
+    everyMinutes: (n: number) => `Currently every ${n} minutes`,
+    intervalSaved: "Check interval saved.",
+
     intervalInvalid: (min: number, max: number) =>
       `Use a whole number of minutes from ${min} to ${max}.`,
     running: "Running…",
@@ -384,6 +387,9 @@ const zh: typeof en = {
     interval: "检查间隔",
     intervalHint: "定时任务多久执行一次。单位分钟，15 到 10080（一周）。",
     intervalUnit: "分钟",
+    everyMinutes: (n) => `当前为每 ${n} 分钟`,
+    intervalSaved: "检查间隔已保存。",
+
     intervalInvalid: (min: number, max: number) =>
       `请填写 ${min} 到 ${max} 之间的整数分钟。`,
     running: "执行中…",

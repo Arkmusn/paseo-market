@@ -279,7 +279,12 @@ export function DirectorySettings({
         { ...values, autoUpdateIntervalMinutes: clampIntervalMinutes(minutes) },
         revision
       )
-      if (!ok) toast.error(t().settings.saveFailed)
+      if (ok) {
+        setIntervalDraft(null)
+        toast.show(t().settings.intervalSaved, { variant: "success" })
+      } else {
+        toast.error(t().settings.saveFailed)
+      }
     } finally {
       setBusy(false)
     }
@@ -428,7 +433,7 @@ export function DirectorySettings({
           disabled={disabled}
         />
         <SettingsAction
-          label={`${t().settings.interval}: ${values.autoUpdateIntervalMinutes} ${t().settings.intervalUnit}`}
+          label={t().settings.everyMinutes(values.autoUpdateIntervalMinutes)}
           actionLabel={t().common.save}
           disabled={disabled}
           onPress={() => {
